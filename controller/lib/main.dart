@@ -1,22 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:controller/tab_widget.dart' as tab_widget;
+import 'package:controller/colors.dart';
 
 void main() {
   runApp(MyApp());
 }
-
-Map<int, Color> colorCodes = {
-  50: Color.fromRGBO(147, 205, 72, .1),
-  100: Color.fromRGBO(147, 205, 72, .2),
-  200: Color.fromRGBO(147, 205, 72, .3),
-  300: Color.fromRGBO(147, 205, 72, .4),
-  400: Color.fromRGBO(147, 205, 72, .5),
-  500: Color.fromRGBO(147, 205, 72, .6),
-  600: Color.fromRGBO(147, 205, 72, .7),
-  700: Color.fromRGBO(147, 205, 72, .8),
-  800: Color.fromRGBO(147, 205, 72, .9),
-  900: Color.fromRGBO(147, 205, 72, 1),
-};
 
 class MyApp extends StatelessWidget {
   @override
@@ -24,8 +13,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'controller',
       theme: ThemeData(
-        primarySwatch: MaterialColor(0xFF003b70, colorCodes),
-        scaffoldBackgroundColor: MaterialColor(0xFF001b33, colorCodes),
+        primarySwatch: primarySwatch,
+        scaffoldBackgroundColor: scaffoldBackgroundColor,
       ),
       home: MyHomePage(title: 'Controller'),
     );
@@ -37,6 +26,8 @@ class MyHomePage extends HookWidget {
 
   final String title;
 
+  static const int TOTAL_TABS = 3;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,14 +35,21 @@ class MyHomePage extends HookWidget {
         title: Text(title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Default Layout',
-              style: TextStyle(color: Colors.white),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: tab_widget.TabWidget(
+            tabs: List<Widget>.generate(
+                TOTAL_TABS, (index) => Tab(text: "Tab ${index + 1}")),
+            tabWidgets: List<Widget>.generate(
+              TOTAL_TABS,
+              (index) => Center(
+                child: Text(
+                  "Tab ${index + 1}",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
