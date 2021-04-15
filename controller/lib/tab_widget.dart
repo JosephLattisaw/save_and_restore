@@ -42,7 +42,7 @@ class TabWidget extends HookWidget {
           child: TabBar(
             tabs: tabs,
             indicator: BoxDecoration(
-              color: Colors.green,
+              color: Colors.blue.shade900,
             ),
             controller: tabController,
           ),
