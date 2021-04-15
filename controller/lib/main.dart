@@ -5,15 +5,29 @@ void main() {
   runApp(MyApp());
 }
 
+Map<int, Color> colorCodes = {
+  50: Color.fromRGBO(147, 205, 72, .1),
+  100: Color.fromRGBO(147, 205, 72, .2),
+  200: Color.fromRGBO(147, 205, 72, .3),
+  300: Color.fromRGBO(147, 205, 72, .4),
+  400: Color.fromRGBO(147, 205, 72, .5),
+  500: Color.fromRGBO(147, 205, 72, .6),
+  600: Color.fromRGBO(147, 205, 72, .7),
+  700: Color.fromRGBO(147, 205, 72, .8),
+  800: Color.fromRGBO(147, 205, 72, .9),
+  900: Color.fromRGBO(147, 205, 72, 1),
+};
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'controller',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: MaterialColor(0xFF003b70, colorCodes),
+        scaffoldBackgroundColor: MaterialColor(0xFF001b33, colorCodes),
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Controller'),
     );
   }
 }
@@ -35,6 +49,7 @@ class MyHomePage extends HookWidget {
           children: <Widget>[
             Text(
               'Default Layout',
+              style: TextStyle(color: Colors.white),
             ),
           ],
         ),
