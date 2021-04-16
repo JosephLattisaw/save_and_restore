@@ -113,6 +113,7 @@ class MyHomePage extends HookWidget {
                               textOn: "ISIM",
                               colorOff: Colors.grey.shade800,
                               colorOn: Colors.orange.shade600,
+                              iconOff: CupertinoIcons.xmark_circle_fill,
                               iconOn: CupertinoIcons.star_lefthalf_fill,
                             ),
                           ),
