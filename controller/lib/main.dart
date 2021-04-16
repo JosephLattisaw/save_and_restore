@@ -55,7 +55,7 @@ class MyHomePage extends HookWidget {
 
   static const int TOTAL_TABS = 1;
 
-  void drawerRouter(BuildContext context, Widget widget) {
+  void _drawerRouter(BuildContext context, Widget widget) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -88,7 +88,8 @@ class MyHomePage extends HookWidget {
               child: SizedBox(width: 1),
             ),
             FloatingActionButton.extended(
-              onPressed: () => null,
+              heroTag: null,
+              onPressed: () => _drawerRouter(context, SaveAndRestoreScreen()),
               icon: Icon(Icons.save),
               label: Text("Save & Restore"),
               backgroundColor: scaffoldBackgroundColor,
@@ -104,6 +105,7 @@ class MyHomePage extends HookWidget {
               ),
             ),
             FloatingActionButton.extended(
+              heroTag: null,
               onPressed: () => null,
               icon: Icon(CupertinoIcons.gamecontroller),
               label: Text("Take Control"),
@@ -138,9 +140,6 @@ class MyHomePage extends HookWidget {
                             ),
                           ),
                           Container(
-                            /*decoration: const BoxDecoration(
-                              color: Colors.red,
-                            ),*/
                             padding: const EdgeInsets.all(4.0),
                             child: LiteRollingSwitch(
                                 textOff: "ADU VDS",
@@ -165,12 +164,14 @@ class MyHomePage extends HookWidget {
                             child: SizedBox(width: 1),
                           ),
                           FloatingActionButton.extended(
+                            heroTag: null,
                             onPressed: () => null,
                             label: Text("Start"),
                             icon: Icon(CupertinoIcons.infinite),
                           ),
                           SizedBox(width: 5.0),
                           FloatingActionButton.extended(
+                            heroTag: null,
                             onPressed: () => null,
                             label: Text("Stop"),
                             icon: Icon(Icons.stop),
@@ -180,11 +181,13 @@ class MyHomePage extends HookWidget {
                             child: SizedBox(width: 1),
                           ),
                           FloatingActionButton(
+                            heroTag: null,
                             onPressed: () => null,
                             child: Icon(Icons.pause),
                           ),
                           SizedBox(width: 8),
                           FloatingActionButton(
+                            heroTag: null,
                             onPressed: () => null,
                             child: Icon(Icons.play_arrow),
                           ),
