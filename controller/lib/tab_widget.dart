@@ -24,7 +24,56 @@ class TabWidget extends HookWidget {
       return tabController.dispose;
     }, const []);
 
-    return Column(
+    return Container(
+      decoration: const BoxDecoration(
+          //color: Colors.orange,
+          ),
+      child: Container(
+        /*decoration: const BoxDecoration(
+          color: Colors.purple,
+        ),*/
+        child: Column(
+          children: [
+            Container(
+              height: 45,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade800,
+              ),
+              child: TabBar(
+                tabs: tabs,
+                controller: tabController,
+                indicator: BoxDecoration(
+                  color: Colors.blue.shade900,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: scaffoldBackgroundColor,
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 5,
+                      spreadRadius: 4,
+                      color: Colors.black.withOpacity(0.8),
+                      offset: Offset(0, 10),
+                    )
+                  ],
+                ),
+                child: TabBarView(
+                  children: tabWidgets,
+                  controller: tabController,
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/*Column(
       children: [
         Container(
           height: 45,
@@ -71,8 +120,4 @@ class TabWidget extends HookWidget {
               ],
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
+        ),*/
