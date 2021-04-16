@@ -84,6 +84,33 @@ class MyHomePage extends HookWidget {
                         iconOn: CupertinoIcons.star_lefthalf_fill,
                       ),
                     ),
+                    Expanded(
+                      child: SizedBox(width: 1),
+                    ),
+                    FloatingActionButton.extended(
+                      onPressed: () {},
+                      label: Text("Start"),
+                      icon: Icon(CupertinoIcons.infinite),
+                    ),
+                    SizedBox(width: 5.0),
+                    FloatingActionButton.extended(
+                      onPressed: () {},
+                      label: Text("Stop"),
+                      icon: Icon(Icons.stop),
+                      backgroundColor: null,
+                    ),
+                    Expanded(
+                      child: SizedBox(width: 1),
+                    ),
+                    FloatingActionButton(
+                      onPressed: () {},
+                      child: Icon(Icons.pause),
+                    ),
+                    SizedBox(width: 8),
+                    FloatingActionButton(
+                      onPressed: () {},
+                      child: Icon(Icons.play_arrow),
+                    ),
                   ],
                 ),
               ),
