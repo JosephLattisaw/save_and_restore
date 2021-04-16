@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:controller/tab_widget.dart' as tab_widget;
 import 'package:controller/table_widget.dart' as table_widget;
 import 'package:controller/colors.dart';
+import 'package:controller/lite_rolling_switch.dart';
 
 void main() {
   runApp(MyApp());
@@ -39,11 +41,50 @@ class MyHomePage extends HookWidget {
       body: Container(
         child: Column(
           children: [
-            Expanded(
+            Flexible(
               flex: 1,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Container(
+                      /*decoration: const BoxDecoration(
+                        color: Colors.red,
+                      ),*/
+                      padding: const EdgeInsets.all(4.0),
+                      child: LiteRollingSwitch(
+                        textOff: "TCTS SIM",
+                        textOn: "SLE",
+                        colorOff: Colors.blue.shade900,
+                        colorOn: Colors.orange.shade600,
+                        iconOff: Icons.title,
+                        iconOn: Icons.public,
+                      ),
+                    ),
+                    Container(
+                      /*decoration: const BoxDecoration(
+                        color: Colors.red,
+                      ),*/
+                      padding: const EdgeInsets.all(4.0),
+                      child: LiteRollingSwitch(
+                          textOff: "ADU VDS",
+                          textOn: "ADUSIM",
+                          colorOff: Colors.blue.shade900,
+                          colorOn: Colors.orange.shade600,
+                          iconOff: CupertinoIcons.rocket_fill,
+                          iconOn: Icons.brightness_auto),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(4.0),
+                      child: LiteRollingSwitch(
+                        textOff: "NO ISIM",
+                        textOn: "ISIM",
+                        colorOff: Colors.grey.shade800,
+                        colorOn: Colors.orange.shade600,
+                        iconOn: CupertinoIcons.star_lefthalf_fill,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
