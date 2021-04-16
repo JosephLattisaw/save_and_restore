@@ -18,6 +18,14 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   flutter_hooks: ^0.16.0
+  xterm: 2.0.0
+
+  window_size:
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: 57a2cd88486105d3d813583339eb0e23c9bfd6d2
+
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +34,6 @@ dev_dependencies:
 # The following section is specific to Flutter.
 flutter:
   uses-material-design: true
+  assets:
+    - assets/mirror44.jpg
+    - assets/honeycomb.png

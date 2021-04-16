@@ -106,7 +106,6 @@ class _RollingSwitchState extends State<LiteRollingSwitch>
       onPanEnd: (details) {
         _action();
         widget.onTap?.call();
-        //widget.onSwipe();
       },
       child: Container(
         padding: EdgeInsets.all(5),
