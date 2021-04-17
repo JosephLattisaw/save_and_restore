@@ -18,33 +18,22 @@ class TabWidget extends HookWidget {
     final ticker = useSingleTickerProvider();
     final tabController =
         useMemoized(() => TabController(length: tabs.length, vsync: ticker));
-    final defaultBorderRadius = useMemoized(() => BorderRadius.circular(10.0));
 
     useEffect(() {
       return tabController.dispose;
     }, const []);
 
     return Container(
-      decoration: const BoxDecoration(
-          //color: Colors.orange,
-          ),
       child: Container(
-        /*decoration: const BoxDecoration(
-          color: Colors.purple,
-        ),*/
         child: Column(
           children: [
             Container(
-              height: 45,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade800,
-              ),
+              height: _tabHeight,
+              color: _tabUnselectedColor,
               child: TabBar(
                 tabs: tabs,
                 controller: tabController,
-                indicator: BoxDecoration(
-                  color: Colors.blue.shade900,
-                ),
+                indicator: _tabIndicator,
               ),
             ),
             Expanded(
@@ -53,10 +42,10 @@ class TabWidget extends HookWidget {
                   color: scaffoldBackgroundColor,
                   boxShadow: [
                     BoxShadow(
-                      blurRadius: 5,
-                      spreadRadius: 4,
-                      color: Colors.black.withOpacity(0.8),
-                      offset: Offset(0, 10),
+                      blurRadius: _BLUR_RADIUS,
+                      spreadRadius: _SPREAD_RADIUS,
+                      color: _boxShadowColor,
+                      offset: _boxShadowOffset,
                     )
                   ],
                 ),
@@ -71,53 +60,14 @@ class TabWidget extends HookWidget {
       ),
     );
   }
-}
 
-/*Column(
-      children: [
-        Container(
-          height: 45,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade800,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                spreadRadius: 5,
-                blurRadius: 7,
-                offset: Offset(0, 3),
-              )
-            ],
-          ),
-          child: TabBar(
-            tabs: tabs,
-            indicator: BoxDecoration(
-              color: Colors.blue.shade900,
-            ),
-            controller: tabController,
-          ),
-        ),
-        Expanded(
-          child: Container(
-            child: TabBarView(
-              children: tabWidgets,
-              controller: tabController,
-            ),
-            decoration: BoxDecoration(
-              color: scaffoldBackgroundColorCodes[900],
-              border: Border(
-                top: BorderSide(
-                  color: Colors.black,
-                  width: 2.4,
-                ),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
-                  offset: Offset(0, 3),
-                )
-              ],
-            ),
-          ),
-        ),*/
+  static const double _tabHeight = 45;
+  static Color _tabUnselectedColor = Colors.grey.shade800;
+  static Decoration _tabIndicator = BoxDecoration(color: Colors.blue.shade900);
+
+  //box shadow settings
+  static const double _BLUR_RADIUS = 5;
+  static const double _SPREAD_RADIUS = 4;
+  static Color _boxShadowColor = Colors.black.withOpacity(0.8);
+  static Offset _boxShadowOffset = Offset(0, 10);
+}
