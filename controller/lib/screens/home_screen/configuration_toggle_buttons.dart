@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:controller/lite_rolling_switch.dart';
+
+import 'package:controller/widgets/lite_rolling_switch.dart';
 
 class ConfigurationToggleButtons extends StatelessWidget {
   ConfigurationToggleButtons({Key? key}) : super(key: key) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:controller/configuration_toggle_buttons.dart';
+import 'package:controller/screens/home_screen/configuration_toggle_buttons.dart';
 import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/screens/home_screen/table_widget.dart'
     as table_widget;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:controller/minimal_expanding_spacer.dart';
-import 'package:controller/controller_floating_action_button.dart';
+import 'package:controller/widgets/minimal_expanding_spacer.dart';
+import 'package:controller/widgets/controller_floating_action_button.dart';
 import 'package:controller/common/colors.dart';
 
 class RightPanel extends StatelessWidget {
