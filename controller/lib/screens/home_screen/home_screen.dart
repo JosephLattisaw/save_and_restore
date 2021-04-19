@@ -5,6 +5,7 @@ import 'package:controller/screens/home_screen/application_bar.dart';
 import 'package:controller/screens/home_screen/panels/right_panel.dart';
 import 'package:controller/screens/home_screen/panels/left_panel.dart';
 import 'package:controller/screens/home_screen/panels/tab_panel.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);

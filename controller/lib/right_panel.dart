@@ -16,7 +16,9 @@ class RightPanel extends StatelessWidget {
           children: [
             MinimalExpandingSpacer(),
             ControllerFloatingActionButton(
-              onPressed: () => null,
+              onPressed: () => () {
+                print("rp");
+              },
               iconData: _TAKE_CONTROL_ICON,
               label: _TAKE_CONTROL_LABEL,
               backgroundColor: primarySwatch,
