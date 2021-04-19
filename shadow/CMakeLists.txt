@@ -7,6 +7,7 @@ enable_testing()
 find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options)
 
 add_executable(shadow main.cpp)
+target_link_libraries(shadow ${Boost_LIBRARIES})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

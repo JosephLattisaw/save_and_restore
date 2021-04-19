@@ -3,6 +3,9 @@
 
 namespace {
 const std::string OPTIONS_DESCRIPTION = "Options";
+const std::string APPLICATION_VERSION = "Shadow 1.0.0";
+const std::string APPLICATION_DESCRIPTION =
+    "Service that controls Save and Restore Applications and is a backend to a Save/Restore GUI";
 
 // Creating an options table for user experience
 const int OPTIONS_NUMBER_PARAMS = 3;
@@ -27,7 +30,7 @@ enum OPTION_HANDLES {
 };
 
 // utility function to print version number
-void print_version_number() { std::cout << "Shadow 1.0.0" << std::endl; }
+void print_version_number() { std::cout << APPLICATION_VERSION << std::endl; }
 
 // utility function to get a specific options handle based on options table
 std::string get_option_handle(OPTIONS options_index, OPTION_HANDLES handle_index) {
@@ -82,7 +85,7 @@ int main(int argc, char **argv) {
     // if user selected help option
     if (vars_map.count(get_options_long_handle(OPTIONS::HELP))) {
         print_version_number();
-        std::cout << "Application Description" << std::endl;
+        std::cout << APPLICATION_DESCRIPTION << std::endl;
         std::cout << desc << std::endl;
         return 0;
     }
