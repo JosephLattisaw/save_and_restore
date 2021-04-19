@@ -1,13 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
 import 'package:controller/common/colors.dart';
 import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
+import 'package:controller/moc_server.dart';
 
 class ApplicationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final server = Provider.of<Server>(context, listen: false);
+    final controlOfSatellite =
+        context.select((Server s) => s.controlOfSatellite);
+    final simulationStarted = context.select((Server s) => s.simulationStarted);
+    final simicsPlaying = context.select((Server s) => s.simicsPlaying);
+
     return AppBar(
       elevation: _APP_BAR_ELEVATION,
       title: Row(
@@ -21,18 +30,26 @@ class ApplicationBar extends StatelessWidget {
           ),
           MinimalExpandingSpacer(),
           ControllerFloatingActionButton(
-            onPressed: () => null,
+            onPressed: (controlOfSatellite && !simulationStarted)
+                ? () => server.startSimulation()
+                : null,
             label: _START_LABEL,
             iconData: _START_ICON,
-            backgroundColor: _floatingActionButtonBackgroundColor,
+            backgroundColor: (controlOfSatellite && !simulationStarted)
+                ? _floatingActionButtonBackgroundColor
+                : Colors.grey.shade900,
             tooltip: _START_TOOLTIP,
           ),
           _appBarSpacer(),
           ControllerFloatingActionButton(
-            onPressed: () => null,
+            onPressed: (controlOfSatellite && simulationStarted)
+                ? () => server.stopSimulation()
+                : null,
             label: _STOP_LABEL,
             iconData: _STOP_ICON,
-            backgroundColor: _floatingActionButtonBackgroundColor,
+            backgroundColor: (controlOfSatellite && simulationStarted)
+                ? _floatingActionButtonBackgroundColor
+                : Colors.grey.shade900,
             tooltip: _STOP_TOOLTIP,
           ),
           SizedBox(
@@ -46,16 +63,32 @@ class ApplicationBar extends StatelessWidget {
             ),
           ),
           ControllerFloatingActionButton(
-            onPressed: () => null,
+            onPressed:
+                (controlOfSatellite && simulationStarted && simicsPlaying)
+                    ? () {
+                        server.startSimics(false);
+                      }
+                    : null,
             iconData: _PAUSE_ICON,
-            backgroundColor: _floatingActionButtonBackgroundColor,
+            backgroundColor:
+                (controlOfSatellite && simulationStarted && simicsPlaying)
+                    ? _floatingActionButtonBackgroundColor
+                    : Colors.grey.shade900,
             tooltip: _PAUSE_TOOLTIP,
           ),
           _appBarSpacer(),
           ControllerFloatingActionButton(
-            onPressed: () => null,
+            onPressed:
+                (controlOfSatellite && simulationStarted && !simicsPlaying)
+                    ? () {
+                        server.startSimics(true);
+                      }
+                    : null,
             iconData: _PLAY_ICON,
-            backgroundColor: _floatingActionButtonBackgroundColor,
+            backgroundColor:
+                (controlOfSatellite && simulationStarted && !simicsPlaying)
+                    ? _floatingActionButtonBackgroundColor
+                    : Colors.grey.shade900,
             tooltip: _PLAY_TOOLTIP,
           ),
         ],

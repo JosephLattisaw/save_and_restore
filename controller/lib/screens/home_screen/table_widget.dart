@@ -4,10 +4,29 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:provider/provider.dart';
+
+import 'package:controller/moc_server.dart';
 
 class TableWidget extends HookWidget {
   @override
   Widget build(BuildContext context) {
+    final server = Provider.of<Server>(context, listen: false);
+    final appStatuses = context.select((Server s) => s.applications);
+
+    Color? _getTableColor(int row, int col) {
+      if (row > 0) {
+        final server = Provider.of<Server>(context, listen: false);
+        if (server.applications[row][col] == Server.RUNNING) {
+          return Colors.green;
+        } else if (server.applications[row][col] == Server.CRASHED) {
+          return Colors.red;
+        }
+      }
+
+      return null;
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey,
@@ -22,16 +41,16 @@ class TableWidget extends HookWidget {
       child: Table(
         border: _tableBorder,
         defaultColumnWidth: IntrinsicColumnWidth(),
-        children: List<TableRow>.generate(_tableColumnLabels.length, (i) {
+        children: List<TableRow>.generate(appStatuses.length, (i) {
           if (i == _HEADER_ROW) {
             return TableRow(
               children: List<Widget>.generate(
-                _tableColumnLabels[i].length,
+                appStatuses[i].length,
                 (k) => Container(
                   padding: _TABLE_PADDING,
                   color: _headerColor,
                   child: Text(
-                    _tableColumnLabels[i][k],
+                    appStatuses[i][k],
                     style: TextStyle(fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
@@ -41,10 +60,16 @@ class TableWidget extends HookWidget {
           } else {
             return TableRow(
               children: List<Widget>.generate(
-                _tableColumnLabels[i].length,
+                appStatuses[i].length,
                 (k) => Container(
                   padding: _TABLE_PADDING,
-                  child: Text(_tableColumnLabels[i][k]),
+                  child: Text(
+                    (k == 0)
+                        ? appStatuses[i][k]
+                        : Server.statusType[appStatuses[i][k]],
+                    textAlign: TextAlign.center,
+                  ),
+                  color: _getTableColor(i, k),
                 ),
               ),
             );
