@@ -4,7 +4,7 @@ project(shadow VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-find_package(Boost 1.74.0 REQUIRED)
+find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options)
 
 add_executable(shadow main.cpp)
 
