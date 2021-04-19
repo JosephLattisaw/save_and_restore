@@ -14,12 +14,14 @@ const std::array<const std::array<std::string, OPTIONS_NUMBER_PARAMS>, OPTIONS_N
     OPTIONS_HANDLE = {{
         {"help", "h", "Displays this help."},
         {"version", "v", "Displays version information"},
+        {"script_path", "", "Path to Scripts of Applications to be Executed"},
     }};
 
 // enumeration of options
 enum OPTIONS {
     HELP = 0,
     VERSION = 1,
+    SCRIPT_PATH = 2,
 };
 
 // enumeration of option parameters
@@ -67,15 +69,21 @@ std::string get_options_long_handle(OPTIONS index) {
 int main(int argc, char **argv) {
     namespace prog_opts = boost::program_options;
 
+    std::vector<std::string> script_paths;
+
     // Getting our options values. NOTE: created a separate object only for readability
     auto hlp_hdl = get_option_handles(OPTIONS::HELP);
     auto hlp_desc = get_options_description(OPTIONS::HELP);
     auto opt_hdl = get_option_handles(OPTIONS::VERSION);
     auto opt_desc = get_options_description(OPTIONS::VERSION);
+    auto app_hdl = get_option_handles(OPTIONS::SCRIPT_PATH);
+    auto app_opt = prog_opts::value<decltype(script_paths)>(&script_paths)->multitoken();
+    auto app_desc = get_options_description(OPTIONS::SCRIPT_PATH);
 
     // creating our options table
     prog_opts::options_description desc(OPTIONS_DESCRIPTION);
-    desc.add_options()(hlp_hdl.c_str(), hlp_desc.c_str())(opt_hdl.c_str(), opt_desc.c_str());
+    desc.add_options()(hlp_hdl.c_str(), hlp_desc.c_str())(
+        opt_hdl.c_str(), opt_desc.c_str())(app_hdl.c_str(), app_opt, app_desc.c_str());
 
     // grabbing options from command line
     prog_opts::variables_map vars_map;
@@ -93,5 +101,11 @@ int main(int argc, char **argv) {
     else if (vars_map.count(get_options_long_handle(OPTIONS::VERSION))) {
         print_version_number();
         return 0;
+    }
+
+    std::cout << "script path size" << script_paths.size() << std::endl;
+    if (script_paths.size() == 0) {
+        std::cerr << "Usage: Must specify at least one script path" << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 }
