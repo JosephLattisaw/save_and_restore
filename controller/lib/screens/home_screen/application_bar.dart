@@ -5,8 +5,9 @@ import 'package:controller/common/colors.dart';
 import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
 
-class ApplicationBar {
-  static AppBar appBar() {
+class ApplicationBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return AppBar(
       elevation: _APP_BAR_ELEVATION,
       title: Row(
