@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'package:provider/provider.dart';
+
 import 'package:controller/screens/home_screen/configuration_toggle_buttons.dart';
 import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/screens/home_screen/table_widget.dart'
@@ -9,10 +11,14 @@ import 'package:controller/common/colors.dart';
 import 'package:controller/common/router_utility.dart';
 import 'package:controller/screens/save_and_restore_screen.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
+import 'package:controller/moc_server.dart';
 
 class LeftPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final controlOfSatellite =
+        context.select((Server s) => s.controlOfSatellite);
+
     return Padding(
       padding: _DEFAULT_PADDING,
       child: Column(
@@ -22,11 +28,14 @@ class LeftPanel extends StatelessWidget {
           table_widget.TableWidget(),
           MinimalExpandingSpacer(),
           ControllerFloatingActionButton(
-            onPressed: () =>
-                RouterUtility.routerUtility(context, SaveAndRestoreScreen()),
+            onPressed: controlOfSatellite
+                ? () =>
+                    RouterUtility.routerUtility(context, SaveAndRestoreScreen())
+                : null,
             iconData: _SAVE_AND_RESTORE_ICON,
             label: _SAVE_AND_RESTORE_LABEL,
-            backgroundColor: primarySwatch,
+            backgroundColor:
+                controlOfSatellite ? primarySwatch : Colors.grey.shade900,
             elevation: _SAVE_AND_RESTORE_ELEVATION,
           ),
           SizedBox(height: _DEFAULT_SPACER_HEIGHT),

@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'package:provider/provider.dart';
+
 import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
 import 'package:controller/common/colors.dart';
+import 'package:controller/moc_server.dart';
 
 class RightPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final server = Provider.of<Server>(context, listen: false);
+    final controlOfSatellite =
+        context.select((Server s) => s.controlOfSatellite);
+
+    print("prints anytime sat value is changed ${server.controlOfSatellite}");
+
     return Container(
       decoration: BoxDecoration(image: _backgroundDecorationImage),
       child: Padding(
@@ -16,10 +25,13 @@ class RightPanel extends StatelessWidget {
           children: [
             MinimalExpandingSpacer(),
             ControllerFloatingActionButton(
-              onPressed: () => null,
+              onPressed: controlOfSatellite
+                  ? null
+                  : () => server.takeControlOfSatellite(),
               iconData: _TAKE_CONTROL_ICON,
-              label: _TAKE_CONTROL_LABEL,
-              backgroundColor: primarySwatch,
+              label: controlOfSatellite ? "In Control" : _TAKE_CONTROL_LABEL,
+              backgroundColor:
+                  controlOfSatellite ? Colors.green : primarySwatch,
               elevation: _TAKE_CONTROL_ELEVATION,
               tooltip: _TAKE_CONTROL_TOOLTIP,
             )
