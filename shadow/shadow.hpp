@@ -9,8 +9,8 @@
 
 class Shadow {
 public:
-    Shadow(std::vector<std::string> application_names, std::vector<std::string> script_paths,
-           std::vector<bool> always_host_only, boost::asio::io_service &io_service);
+    Shadow(std::vector<std::string> application_names, std::vector<std::string> script_paths, std::vector<bool> always_host_only,
+           boost::asio::io_service &io_service);
     ~Shadow();
 
     void start_all_processes();

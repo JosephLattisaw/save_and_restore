@@ -4,8 +4,8 @@
 
 #include "shadow_host_server_message.hpp"
 
-HostServer::HostServer(boost::asio::io_service& io_service, std::uint16_t port,
-                       std::vector<std::string> app_names, shadow::ApplicationStatuses app_statuses)
+HostServer::HostServer(boost::asio::io_service& io_service, std::uint16_t port, std::vector<std::string> app_names,
+                       shadow::ApplicationStatusesEnum app_statuses)
     : io_service(io_service),
       port(port),
       acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
@@ -23,17 +23,14 @@ void HostServer::start_async_accept() {
         if (!error) {
             std::cout << "HostServer: accepted connection on port " << port << std::endl;
             std::cout << "HostServer: assigned client id of: " << client_number_count << std::endl;
-            auto c = std::make_unique<HostServerClient>(
-                client_number_count, io_service, std::move(temp_socket),
-                [&](std::uint64_t client_id) {
-                    auto it = socket_map.find(client_id);
-                    if (it != socket_map.end()) {
-                        socket_map.erase(client_id);
-                        std::cout << "HostServer: client " << client_id << " disconnected"
-                                  << std::endl;
-                    } else
-                        std::cerr << "HostServer: could not find socket to erase" << std::endl;
-                });
+            auto c = std::make_unique<HostServerClient>(client_number_count, io_service, std::move(temp_socket), [&](std::uint64_t client_id) {
+                auto it = socket_map.find(client_id);
+                if (it != socket_map.end()) {
+                    socket_map.erase(client_id);
+                    std::cout << "HostServer: client " << client_id << " disconnected" << std::endl;
+                } else
+                    std::cerr << "HostServer: could not find socket to erase" << std::endl;
+            });
 
             socket_map.insert(std::make_pair(client_number_count, std::move(c)));
 
@@ -45,8 +42,7 @@ void HostServer::start_async_accept() {
 
             client_number_count++;
         } else {
-            std::cerr << "HostServer: attempted to accept connection on port " << port
-                      << " but an error occurred: " << error.message() << std::endl;
+            std::cerr << "HostServer: attempted to accept connection on port " << port << " but an error occurred: " << error.message() << std::endl;
             temp_socket.reset();
             return;
         }
@@ -56,14 +52,9 @@ void HostServer::start_async_accept() {
     });
 }
 
-HostServer::HostServerClient::HostServerClient(std::uint64_t client_number,
-                                               boost::asio::io_service& io_service,
-                                               std::unique_ptr<boost::asio::ip::tcp::socket> sock,
-                                               Disconnect_Callback callback)
-    : client_number(client_number),
-      io_service(io_service),
-      socket(std::move(sock)),
-      disconnect_callback{callback} {
+HostServer::HostServerClient::HostServerClient(std::uint64_t client_number, boost::asio::io_service& io_service,
+                                               std::unique_ptr<boost::asio::ip::tcp::socket> sock, Disconnect_Callback callback)
+    : client_number(client_number), io_service(io_service), socket(std::move(sock)), disconnect_callback{callback} {
     start_read();
 }
 
@@ -77,23 +68,18 @@ void HostServer::HostServerClient::start_read() {
                     reset_buffers();
                     start_read();
                 } else {
-                    std::cerr << "host server client " << client_number
-                              << ": received invalid message size of: " << bytes_transferred
+                    std::cerr << "host server client " << client_number << ": received invalid message size of: " << bytes_transferred
                               << ", expected: " << sizeof(shadow::shadow_host_message) << std::endl;
                     reset();
                 }
             } else {
-                std::cerr << "host server client " << client_number
-                          << ": encountered error when reading header : " << error.message()
-                          << std::endl;
+                std::cerr << "host server client " << client_number << ": encountered error when reading header : " << error.message() << std::endl;
                 reset();
             }
         });
 }
 
-void HostServer::HostServerClient::reset_buffers() {
-    message_buffer.consume(message_buffer.size());
-}
+void HostServer::HostServerClient::reset_buffers() { message_buffer.consume(message_buffer.size()); }
 
 void HostServer::HostServerClient::reset() {
     if (socket) {
@@ -105,8 +91,8 @@ void HostServer::HostServerClient::reset() {
     disconnected = true;
 }
 
-void HostServer::HostServerClient::send_application_update(
-    std::vector<std::string> application_names, shadow::ApplicationStatuses application_statuses) {
+void HostServer::HostServerClient::send_application_update(std::vector<std::string> application_names,
+                                                           shadow::ApplicationStatusesEnum application_statuses) {
     assert(application_names.size() == application_statuses.size());
     assert(socket);
     if (socket && socket->is_open()) {
@@ -123,8 +109,7 @@ void HostServer::HostServerClient::send_application_update(
         std::vector<std::vector<std::uint8_t>> names;
 
         for (auto i = 0; i < application_names.size(); i++) {
-            std::vector<std::uint8_t> app_name(application_names[i].begin(),
-                                               application_names[i].end());
+            std::vector<std::uint8_t> app_name(application_names[i].begin(), application_names[i].end());
 
             as_sizes.push_back(app_name.size() * sizeof(decltype(app_name)::value_type));
             names.push_back(app_name);
@@ -134,16 +119,12 @@ void HostServer::HostServerClient::send_application_update(
         }
 
         // writing header
-        boost::asio::async_write(*socket,
-                                 boost::asio::buffer(reinterpret_cast<char*>(&shm), sizeof(shm)),
-                                 std::bind(&HostServer::HostServerClient::write_error_handler, this,
-                                           std::placeholders::_1, std::placeholders::_2));
+        boost::asio::async_write(*socket, boost::asio::buffer(reinterpret_cast<char*>(&shm), sizeof(shm)),
+                                 std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
 
         // writing total applications
-        boost::asio::async_write(*socket,
-                                 boost::asio::buffer(reinterpret_cast<char*>(&sta), sizeof(sta)),
-                                 std::bind(&HostServer::HostServerClient::write_error_handler, this,
-                                           std::placeholders::_1, std::placeholders::_2));
+        boost::asio::async_write(*socket, boost::asio::buffer(reinterpret_cast<char*>(&sta), sizeof(sta)),
+                                 std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
 
         for (auto i = 0; i < application_names.size(); i++) {
             shadow::shadow_app_status sat;
@@ -152,13 +133,11 @@ void HostServer::HostServerClient::send_application_update(
 
             boost::asio::async_write(
                 *socket, boost::asio::buffer(reinterpret_cast<char*>(&sat), sizeof(sat)),
-                std::bind(&HostServer::HostServerClient::write_error_handler, this,
-                          std::placeholders::_1, std::placeholders::_2));
+                std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
 
             boost::asio::async_write(
                 *socket, boost::asio::buffer(reinterpret_cast<char*>(names[i].data()), as_sizes[i]),
-                std::bind(&HostServer::HostServerClient::write_error_handler, this,
-                          std::placeholders::_1, std::placeholders::_2));
+                std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
         }
     } else {
         std::cerr << "host server client: " << client_number
@@ -169,11 +148,9 @@ void HostServer::HostServerClient::send_application_update(
     }
 }
 
-void HostServer::HostServerClient::write_error_handler(const boost::system::error_code& error,
-                                                       std::size_t bytes_transferred) {
+void HostServer::HostServerClient::write_error_handler(const boost::system::error_code& error, std::size_t bytes_transferred) {
     if (error) {
-        std::cerr << "host server client: " << client_number
-                  << " error writing data: " << error.message() << std::endl;
+        std::cerr << "host server client: " << client_number << " error writing data: " << error.message() << std::endl;
         reset();
     }
 }

@@ -35,6 +35,8 @@ struct shadow_app_status {
 
     std::uint8_t* application_name;
 };
+
+using ApplicationStatusesEnum = std::vector<shadow_app_status::app_status>;
 }  // namespace shadow
 
 #endif

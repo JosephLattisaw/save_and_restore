@@ -8,20 +8,18 @@
 namespace {
 const std::string OPTIONS_DESCRIPTION = "Options";
 const std::string APPLICATION_VERSION = "Shadow 1.0.0";
-const std::string APPLICATION_DESCRIPTION =
-    "Service that controls Save and Restore Applications and is a backend to a Save/Restore GUI";
+const std::string APPLICATION_DESCRIPTION = "Service that controls Save and Restore Applications and is a backend to a Save/Restore GUI";
 
 // Creating an options table for user experience
 const int OPTIONS_NUMBER_PARAMS = 3;
 const int OPTIONS_NUMBER_ELEMENTS = 5;
-const std::array<const std::array<std::string, OPTIONS_NUMBER_PARAMS>, OPTIONS_NUMBER_ELEMENTS>
-    OPTIONS_HANDLE = {{
-        {"help", "h", "Displays this help."},
-        {"version", "v", "Displays version information"},
-        {"script_path", "", "Path to Scripts of Applications to be Executed"},
-        {"application_names", "", "Names of Applications"},
-        {"always_host_only", "", "Processes that are always Host Only"},
-    }};
+const std::array<const std::array<std::string, OPTIONS_NUMBER_PARAMS>, OPTIONS_NUMBER_ELEMENTS> OPTIONS_HANDLE = {{
+    {"help", "h", "Displays this help."},
+    {"version", "v", "Displays version information"},
+    {"script_path", "", "Path to Scripts of Applications to be Executed"},
+    {"application_names", "", "Names of Applications"},
+    {"always_host_only", "", "Processes that are always Host Only"},
+}};
 
 // enumeration of options
 enum OPTIONS {
@@ -49,8 +47,7 @@ std::string get_option_handle(OPTIONS options_index, OPTION_HANDLES handle_index
         auto opt_h = OPTIONS_HANDLE.at(options_index);
         res = opt_h.at(handle_index);
     } catch (std::out_of_range const &exc) {
-        std::cout << __PRETTY_FUNCTION__ << ", options_index: " << options_index
-                  << ", handle_index: " << handle_index << std::endl;
+        std::cout << __PRETTY_FUNCTION__ << ", options_index: " << options_index << ", handle_index: " << handle_index << std::endl;
         throw;
     }
 
@@ -59,19 +56,14 @@ std::string get_option_handle(OPTIONS options_index, OPTION_HANDLES handle_index
 
 // utility function to get a specific options handle
 std::string get_option_handles(OPTIONS index) {
-    return get_option_handle(index, OPTION_HANDLES::HANDLE) + "," +
-           get_option_handle(index, OPTION_HANDLES::SHORT_HANDLE);
+    return get_option_handle(index, OPTION_HANDLES::HANDLE) + "," + get_option_handle(index, OPTION_HANDLES::SHORT_HANDLE);
 }
 
 // utility function to get the options description
-std::string get_options_description(OPTIONS index) {
-    return get_option_handle(index, OPTION_HANDLES::DESCRIPTION);
-}
+std::string get_options_description(OPTIONS index) { return get_option_handle(index, OPTION_HANDLES::DESCRIPTION); }
 
 // utility function to get the options handle
-std::string get_options_long_handle(OPTIONS index) {
-    return get_option_handle(index, OPTION_HANDLES::HANDLE);
-}
+std::string get_options_long_handle(OPTIONS index) { return get_option_handle(index, OPTION_HANDLES::HANDLE); }
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -103,11 +95,8 @@ int main(int argc, char **argv) {
     // creating our options table
     prog_opts::options_description desc(OPTIONS_DESCRIPTION);
     desc.add_options()(hlp_hdl.c_str(), hlp_desc.c_str())(
-        opt_hdl.c_str(), opt_desc.c_str())(app_hdl.c_str(), app_opt,
-                                           app_desc.c_str())(aho_hdl.c_str(), aho_opt,
-                                                             aho_desc.c_str())(name_hdl.c_str(),
-                                                                               name,
-                                                                               name_desc.c_str());
+        opt_hdl.c_str(), opt_desc.c_str())(app_hdl.c_str(), app_opt, app_desc.c_str())(aho_hdl.c_str(), aho_opt,
+                                                                                       aho_desc.c_str())(name_hdl.c_str(), name, name_desc.c_str());
 
     // grabbing options from command line
     prog_opts::variables_map vars_map;
@@ -131,12 +120,12 @@ int main(int argc, char **argv) {
         std::cerr << "Usage: Must specify at least one script path" << std::endl;
         std::exit(EXIT_FAILURE);
     } else if (script_paths.size() != always_host_only.size()) {
-        std::cerr << "Usage: script_paths and always_host_only should be the same size: "
-                  << script_paths.size() << "," << always_host_only.size() << std::endl;
+        std::cerr << "Usage: script_paths and always_host_only should be the same size: " << script_paths.size() << "," << always_host_only.size()
+                  << std::endl;
         std::exit(EXIT_FAILURE);
     } else if (script_paths.size() != application_names.size()) {
-        std::cerr << "Usage: script_paths and application_names should be the same size: "
-                  << script_paths.size() << "," << application_names.size() << std::endl;
+        std::cerr << "Usage: script_paths and application_names should be the same size: " << script_paths.size() << "," << application_names.size()
+                  << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
