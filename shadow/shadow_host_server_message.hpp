@@ -7,7 +7,7 @@ struct shadow_host_message {
 
     enum struct host_message : std::uint32_t {
         MAIN_STATUS = 0,
-        APP_STATUS = 1,
+        APP_INITIAL_STATUS = 1,
     } message;
 };
 

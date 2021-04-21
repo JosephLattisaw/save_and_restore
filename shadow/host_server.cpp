@@ -112,7 +112,7 @@ void HostServer::HostServerClient::send_application_update(
     if (socket && socket->is_open()) {
         // creating main header
         shadow::shadow_host_message shm;
-        shm.message = shadow::shadow_host_message::host_message::APP_STATUS;
+        shm.message = shadow::shadow_host_message::host_message::APP_INITIAL_STATUS;
 
         // total applications
         shadow::shadow_total_apps sta;
@@ -146,12 +146,17 @@ void HostServer::HostServerClient::send_application_update(
                                            std::placeholders::_1, std::placeholders::_2));
 
         for (auto i = 0; i < application_names.size(); i++) {
-            shadow::shadow_app_status sha;
-            sha.status = application_statuses[i];
-            sha.size = as_sizes[i];
+            shadow::shadow_app_status sat;
+            sat.status = application_statuses[i];
+            sat.size = as_sizes[i];
 
             boost::asio::async_write(
-                *socket, boost::asio::buffer(reinterpret_cast<char*>(&sha), sizeof(sha)),
+                *socket, boost::asio::buffer(reinterpret_cast<char*>(&sat), sizeof(sat)),
+                std::bind(&HostServer::HostServerClient::write_error_handler, this,
+                          std::placeholders::_1, std::placeholders::_2));
+
+            boost::asio::async_write(
+                *socket, boost::asio::buffer(reinterpret_cast<char*>(names[i].data()), as_sizes[i]),
                 std::bind(&HostServer::HostServerClient::write_error_handler, this,
                           std::placeholders::_1, std::placeholders::_2));
         }
