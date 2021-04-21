@@ -5,7 +5,7 @@
 Shadow::Shadow(std::vector<std::string> app_names, std::vector<std::string> sp, std::vector<bool> aho, boost::asio::io_service &io_service)
     : application_names(app_names), script_paths(sp), always_host_only(aho), io_service(io_service) {
     // start_all_processes();
-    application_statuses = shadow::ApplicationStatuses(application_names.size(), shadow::shadow_app_status::app_status::NOT_RUNNING);
+    application_statuses = shadow::ApplicationStatusesEnum(application_names.size(), shadow::shadow_app_status::app_status::NOT_RUNNING);
     host_server = std::make_unique<HostServer>(io_service, 20001, application_names, application_statuses);
 }
 

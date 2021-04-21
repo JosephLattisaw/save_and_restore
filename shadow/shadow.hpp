@@ -20,7 +20,7 @@ private:
     std::vector<bool> always_host_only;
     std::vector<std::string> script_paths;
     std::vector<std::string> application_names;
-    shadow::ApplicationStatuses application_statuses;
+    shadow::ApplicationStatusesEnum application_statuses;
 
     std::vector<std::shared_ptr<boost::process::child>> children;  // child processes
 
