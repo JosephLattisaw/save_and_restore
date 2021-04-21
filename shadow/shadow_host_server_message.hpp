@@ -2,6 +2,9 @@
 #define SHADOW_HOST_SERVER_MESSAGE_HPP
 
 namespace shadow {
+typedef std::uint8_t app_status_t;
+using ApplicationStatuses = std::vector<app_status_t>;
+
 struct shadow_host_message {
     std::uint32_t size = 0;  // size of all following packets
 
@@ -24,7 +27,7 @@ struct shadow_total_apps {
 struct shadow_app_status {
     std::uint32_t size = 0;  // size of following application
 
-    enum struct app_status : std::uint32_t {
+    enum struct app_status : std::uint8_t {
         NOT_RUNNING = 0,
         RUNNING = 1,
         CRASHED = 2,
@@ -32,7 +35,6 @@ struct shadow_app_status {
 
     std::uint8_t* application_name;
 };
-using ApplicationStatuses = std::vector<shadow::shadow_app_status::app_status>;
 }  // namespace shadow
 
 #endif

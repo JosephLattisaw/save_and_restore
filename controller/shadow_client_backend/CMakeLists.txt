@@ -6,10 +6,12 @@ enable_testing()
 
 find_package(Boost 1.74.0 REQUIRED)
 
-add_library(shadow_client_backend SHARED shadow_client_backend.cpp client.cpp)
+set(shadow_client_backend_SRC include/dart_api_dl.c shadow_client_backend.cpp client.cpp)
+
+add_library(shadow_client_backend SHARED ${shadow_client_backend_SRC})
 target_link_libraries(shadow_client_backend ${Boost_LIBRARIES} pthread)
 
-add_executable(shadow_client_backend_test shadow_client_backend.cpp client.cpp)
+add_executable(shadow_client_backend_test ${shadow_client_backend_SRC})
 target_link_libraries(shadow_client_backend_test ${Boost_LIBRARIES} pthread)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

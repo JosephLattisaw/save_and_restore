@@ -30,66 +30,46 @@ void Client::start_read() {
         [&](const boost::system::error_code &error, std::size_t bytes_transferred) {
             if (!error && socket.is_open()) {
                 if (header_buffer.size() == sizeof(shadow::shadow_host_message)) {
-                    const shadow::shadow_host_message *shm =
-                        boost::asio::buffer_cast<const shadow::shadow_host_message *>(
-                            header_buffer.data());
+                    const shadow::shadow_host_message *shm = boost::asio::buffer_cast<const shadow::shadow_host_message *>(header_buffer.data());
 
                     std::cout << "client: finished reading header" << std::endl;
-                    std::cout << "client: attempting to read " << shm->size << " bytes"
-                              << std::endl;
+                    std::cout << "client: attempting to read " << shm->size << " bytes" << std::endl;
 
                     auto msg = shm->message;
                     auto msg_size = shm->size;
 
                     boost::asio::async_read(
                         socket, data_buffer, boost::asio::transfer_exactly(msg_size),
-                        [&, msg, msg_size](const boost::system::error_code &error,
-                                           std::size_t bytes_transferred) {
+                        [&, msg, msg_size](const boost::system::error_code &error, std::size_t bytes_transferred) {
                             if (!error) {
                                 if (data_buffer.size() == msg_size) {
-                                    std::cout << "client received the correct amount of data"
-                                              << std::endl;
-                                    const std::uint8_t *data =
-                                        boost::asio::buffer_cast<const std::uint8_t *>(
-                                            data_buffer.data());
+                                    std::cout << "client received the correct amount of data" << std::endl;
+                                    const std::uint8_t *data = boost::asio::buffer_cast<const std::uint8_t *>(data_buffer.data());
 
                                     switch (msg) {
-                                        case shadow::shadow_host_message::host_message::
-                                            APP_INITIAL_STATUS: {
-                                            std::cout << "client: received app status message"
-                                                      << std::endl;
+                                        case shadow::shadow_host_message::host_message::APP_INITIAL_STATUS: {
+                                            std::cout << "client: received app status message" << std::endl;
 
-                                            const shadow::shadow_total_apps *sta =
-                                                reinterpret_cast<const shadow::shadow_total_apps *>(
-                                                    &data[0]);
+                                            const shadow::shadow_total_apps *sta = reinterpret_cast<const shadow::shadow_total_apps *>(&data[0]);
 
-                                            std::cout << "client: total applications: "
-                                                      << sta->total_applications << std::endl;
+                                            std::cout << "client: total applications: " << sta->total_applications << std::endl;
 
                                             auto it = sizeof(shadow::shadow_total_apps);
                                             std::vector<std::string> apps;
-                                            std::vector<shadow::shadow_app_status::app_status>
-                                                app_statuses;
+                                            shadow::ApplicationStatuses app_statuses;
                                             for (auto i = 0; i < sta->total_applications; i++) {
-                                                const shadow::shadow_app_status *sat =
-                                                    reinterpret_cast<
-                                                        const shadow::shadow_app_status *>(
-                                                        &data[it]);
+                                                const shadow::shadow_app_status *sat = reinterpret_cast<const shadow::shadow_app_status *>(&data[it]);
 
-                                                std::cout << "client: application name size: "
-                                                          << sat->size << std::endl;
-                                                std::cout << "client: application status: "
-                                                          << static_cast<int>(sat->status)
-                                                          << std::endl;
+                                                std::cout << "client: application name size: " << sat->size << std::endl;
+                                                std::cout << "client: application status: " << static_cast<int>(sat->status) << std::endl;
 
-                                                app_statuses.push_back(sat->status);
+                                                app_statuses.push_back(static_cast<shadow::app_status_t>(sat->status));
 
                                                 it += sizeof(shadow::shadow_app_status);
 
                                                 std::string name(&data[it], &data[it] + sat->size);
                                                 apps.push_back(name);
-                                                std::cout << "client: application name: " << name
-                                                          << std::endl;
+                                                std::cout << "client: application name: " << name << std::endl;
                                                 it += sat->size;
                                             }
                                             if (apps.size() == app_statuses.size()) {
@@ -101,20 +81,17 @@ void Client::start_read() {
                                             }
                                         } break;
                                         case shadow::shadow_host_message::host_message::MAIN_STATUS:
-                                            std::cout << "client: received main status message"
-                                                      << std::endl;
+                                            std::cout << "client: received main status message" << std::endl;
                                             break;
                                     }
 
                                 } else {
-                                    std::cerr << "client: received invalid data size of: "
-                                              << bytes_transferred << ", expected: " << msg_size
+                                    std::cerr << "client: received invalid data size of: " << bytes_transferred << ", expected: " << msg_size
                                               << std::endl;
                                     reset();
                                 }
                             } else {
-                                std::cerr << "client: encountered error when reading data: "
-                                          << error.message() << std::endl;
+                                std::cerr << "client: encountered error when reading data: " << error.message() << std::endl;
                                 reset();
                             }
                         });
@@ -125,8 +102,7 @@ void Client::start_read() {
                     reset();
                 }
             } else {
-                std::cerr << "client: encountered error when reading header: " << error.message()
-                          << std::endl;
+                std::cerr << "client: encountered error when reading header: " << error.message() << std::endl;
                 reset();
             }
         });

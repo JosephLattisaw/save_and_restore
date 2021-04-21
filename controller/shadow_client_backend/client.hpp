@@ -7,10 +7,8 @@
 
 class Client {
 public:
-    using AppInitialStatusCallback =
-        std::function<void(std::vector<std::string>, shadow::ApplicationStatuses)>;
-    Client(boost::asio::io_service &io_service,
-           AppInitialStatusCallback app_initial_status_callback);
+    using AppInitialStatusCallback = std::function<void(std::vector<std::string>, shadow::ApplicationStatuses)>;
+    Client(boost::asio::io_service &io_service, AppInitialStatusCallback app_initial_status_callback);
 
 private:
     void reset();
