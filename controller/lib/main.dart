@@ -9,6 +9,8 @@ import 'package:controller/common/colors.dart';
 import 'package:controller/screens/home_screen/home_screen.dart';
 import 'package:controller/moc_server.dart';
 
+import 'package:controller/shadow_client_c_api.dart' as c_api;
+
 void main() {
   runApp(MyApp());
   setWindowTitle(
@@ -22,6 +24,10 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) => Server(),
+          lazy: false,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => c_api.ShadowClientCAPI(),
           lazy: false,
         ),
       ],

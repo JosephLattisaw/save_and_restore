@@ -12,12 +12,15 @@ import 'package:controller/common/router_utility.dart';
 import 'package:controller/screens/save_and_restore_screen.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
 import 'package:controller/moc_server.dart';
+import 'package:controller/shadow_client_c_api.dart';
 
 class LeftPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controlOfSatellite =
         context.select((Server s) => s.controlOfSatellite);
+    final serverConnected =
+        context.select((ShadowClientCAPI s) => s.serverConnected);
 
     return Padding(
       padding: _DEFAULT_PADDING,
@@ -43,9 +46,11 @@ class LeftPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: Container(
-                  color: _disconnectedColor,
+                  color: serverConnected ? Colors.green : _disconnectedColor,
                   child: Text(
-                    _DISCONNECTED_TEXT,
+                    serverConnected
+                        ? "Connected to Server"
+                        : _DISCONNECTED_TEXT,
                     textAlign: _CONNECTION_STATUS_ALIGNMENT,
                   ),
                 ),

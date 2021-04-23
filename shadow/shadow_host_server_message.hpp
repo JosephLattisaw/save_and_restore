@@ -11,6 +11,11 @@ struct shadow_host_message {
     enum struct host_message : std::uint32_t {
         MAIN_STATUS = 0,
         APP_INITIAL_STATUS = 1,
+        TAKE_CONTROL = 2,
+        START_SIM = 3,
+        STOP_SIM = 4,
+        PLAY_SIMICS = 5,
+        PAUSE_SIMICS = 6,
     } message;
 };
 
@@ -18,10 +23,16 @@ struct shadow_main_status {
     std::uint8_t in_control = false;
     std::uint8_t simulation_started = false;
     std::uint8_t simics_playing = false;
+    std::uint64_t config_number = 0;
 };
 
 struct shadow_total_apps {
-    std::uint32_t total_applications;
+    std::uint32_t total_applications = 0;
+    std::uint32_t total_configurations = 0;
+};
+
+struct shadow_config_message {
+    std::uint32_t configuration_number = 0;
 };
 
 struct shadow_app_status {

@@ -7,15 +7,23 @@ import 'package:controller/common/colors.dart';
 import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
 import 'package:controller/moc_server.dart';
+import 'package:controller/shadow_client_c_api.dart';
 
 class ApplicationBar extends StatelessWidget {
+  void startSimulation(ShadowClientCAPI client) {
+    print("app bar: starting simulation");
+    client.startSimulation(0);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final server = Provider.of<Server>(context, listen: false);
+    final client = Provider.of<ShadowClientCAPI>(context, listen: false);
     final controlOfSatellite =
-        context.select((Server s) => s.controlOfSatellite);
-    final simulationStarted = context.select((Server s) => s.simulationStarted);
-    final simicsPlaying = context.select((Server s) => s.simicsPlaying);
+        context.select((ShadowClientCAPI s) => s.controlOfSatellite);
+    final simulationStarted =
+        context.select((ShadowClientCAPI s) => s.simulationStarted);
+    final simicsPlaying =
+        context.select((ShadowClientCAPI s) => s.simicsPlaying);
 
     return AppBar(
       elevation: _APP_BAR_ELEVATION,
@@ -31,7 +39,7 @@ class ApplicationBar extends StatelessWidget {
           MinimalExpandingSpacer(),
           ControllerFloatingActionButton(
             onPressed: (controlOfSatellite && !simulationStarted)
-                ? () => server.startSimulation()
+                ? () => startSimulation(client)
                 : null,
             label: _START_LABEL,
             iconData: _START_ICON,
@@ -43,7 +51,7 @@ class ApplicationBar extends StatelessWidget {
           _appBarSpacer(),
           ControllerFloatingActionButton(
             onPressed: (controlOfSatellite && simulationStarted)
-                ? () => server.stopSimulation()
+                ? () => client.stopSimulation()
                 : null,
             label: _STOP_LABEL,
             iconData: _STOP_ICON,
@@ -66,7 +74,7 @@ class ApplicationBar extends StatelessWidget {
             onPressed:
                 (controlOfSatellite && simulationStarted && simicsPlaying)
                     ? () {
-                        server.startSimics(false);
+                        client.pauseSimics();
                       }
                     : null,
             iconData: _PAUSE_ICON,
@@ -81,7 +89,7 @@ class ApplicationBar extends StatelessWidget {
             onPressed:
                 (controlOfSatellite && simulationStarted && !simicsPlaying)
                     ? () {
-                        server.startSimics(true);
+                        client.startSimics();
                       }
                     : null,
             iconData: _PLAY_ICON,

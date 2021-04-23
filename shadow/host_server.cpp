@@ -5,12 +5,15 @@
 #include "shadow_host_server_message.hpp"
 
 HostServer::HostServer(boost::asio::io_service& io_service, std::uint16_t port, std::vector<std::string> app_names,
-                       shadow::ApplicationStatusesEnum app_statuses)
+                       shadow::ApplicationStatusesEnum app_statuses, PowerSimCallback ps_cb, SimicsControlCallback sc_cb)
     : io_service(io_service),
       port(port),
       acceptor(io_service, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
       application_names(app_names),
-      application_statuses(app_statuses) {
+      application_statuses(app_statuses),
+      power_sim_callback{ps_cb},
+      simics_control_callback{sc_cb} {
+    fcntl(acceptor.native_handle(), F_SETFD, FD_CLOEXEC);  // this is needed to prevent any child process from taking control on crash
     start_async_accept();
 }
 
@@ -21,16 +24,40 @@ void HostServer::start_async_accept() {
     temp_socket = std::make_unique<boost::asio::ip::tcp::socket>(io_service);
     acceptor.async_accept(*temp_socket, [&](const boost::system::error_code& error) {
         if (!error) {
+            fcntl(temp_socket->native_handle(), F_SETFD, FD_CLOEXEC);
             std::cout << "HostServer: accepted connection on port " << port << std::endl;
             std::cout << "HostServer: assigned client id of: " << client_number_count << std::endl;
-            auto c = std::make_unique<HostServerClient>(client_number_count, io_service, std::move(temp_socket), [&](std::uint64_t client_id) {
-                auto it = socket_map.find(client_id);
-                if (it != socket_map.end()) {
-                    socket_map.erase(client_id);
-                    std::cout << "HostServer: client " << client_id << " disconnected" << std::endl;
-                } else
-                    std::cerr << "HostServer: could not find socket to erase" << std::endl;
-            });
+            auto c = std::make_unique<HostServerClient>(
+                client_number_count, io_service, std::move(temp_socket),
+                [&](std::uint64_t client_id) {
+                    auto it = socket_map.find(client_id);
+                    if (it != socket_map.end()) {
+                        socket_map.erase(client_id);
+                        std::cout << "HostServer: client " << client_id << " disconnected" << std::endl;
+                    } else
+                        std::cerr << "HostServer: could not find socket to erase" << std::endl;
+                },
+                [&](std::uint64_t client_id, bool power_sim, std::uint32_t configuration_number) {
+                    if (client_id == client_in_control_id) {
+                        std::cout << "HostServer: received power sim: " << power_sim << ", config: " << configuration_number
+                                  << ", from client in control" << std::endl;
+                        power_sim_callback(power_sim, configuration_number);
+                    } else
+                        std::cerr << "HostServer: error received power sim: " << power_sim << "from client not in control, ignoring" << std::endl;
+                },
+                [&](std::uint64_t client_id) {
+                    client_in_control_id = client_id;
+                    std::cout << "HostServer: client " << client_in_control_id << " is now in control" << std::endl;
+                    send_status_update();
+                },
+                [&](std::uint64_t client_id, bool simics_sim) {
+                    if (client_id == client_in_control_id) {
+                        std::cout << "HostServer: received simics control sim: " << simics_sim << "from client in control" << std::endl;
+                        simics_control_callback(simics_sim);
+                    } else
+                        std::cerr << "HostServer: error received simics control sim: " << simics_sim << " from client not in control, ignoring"
+                                  << std::endl;
+                });
 
             socket_map.insert(std::make_pair(client_number_count, std::move(c)));
 
@@ -53,20 +80,85 @@ void HostServer::start_async_accept() {
 }
 
 HostServer::HostServerClient::HostServerClient(std::uint64_t client_number, boost::asio::io_service& io_service,
-                                               std::unique_ptr<boost::asio::ip::tcp::socket> sock, Disconnect_Callback callback)
-    : client_number(client_number), io_service(io_service), socket(std::move(sock)), disconnect_callback{callback} {
+                                               std::unique_ptr<boost::asio::ip::tcp::socket> sock, Disconnect_Callback d_cb, PowerSimCallback ps_cb,
+                                               TakeControlCallback tc_cb, SimicsControlCallback sc_cb)
+    : client_number(client_number),
+      io_service(io_service),
+      socket(std::move(sock)),
+      disconnect_callback{d_cb},
+      power_sim_callback{ps_cb},
+      take_control_callback{tc_cb},
+      simics_control_callback{sc_cb} {
     start_read();
 }
 
 void HostServer::HostServerClient::start_read() {
     assert(socket);
     boost::asio::async_read(
-        *socket, message_buffer, boost::asio::transfer_exactly(sizeof(shadow::shadow_host_message)),
+        *socket, header_buffer, boost::asio::transfer_exactly(sizeof(shadow::shadow_host_message)),
         [&](const boost::system::error_code& error, std::size_t bytes_transferred) {
             if (!error) {
-                if (message_buffer.size() == sizeof(shadow::shadow_host_message)) {
-                    reset_buffers();
-                    start_read();
+                if (header_buffer.size() == sizeof(shadow::shadow_host_message)) {
+                    const shadow::shadow_host_message* shm = boost::asio::buffer_cast<const shadow::shadow_host_message*>(header_buffer.data());
+                    auto msg_size = shm->size;
+                    auto msg = shm->message;
+                    if (msg_size == 0) {
+                        switch (msg) {
+                            case shadow::shadow_host_message::host_message::TAKE_CONTROL:
+                                take_control_callback(client_number);
+                                break;
+                            case shadow::shadow_host_message::host_message::START_SIM:
+                                // power_sim_callback(client_number, true);
+                                std::cerr << "host server: received start sim command without following message, resetting socket" << std::endl;
+                                reset();
+                                break;
+                            case shadow::shadow_host_message::host_message::STOP_SIM:
+                                power_sim_callback(client_number, false, 0);
+                                break;
+                            case shadow::shadow_host_message::host_message::PLAY_SIMICS:
+                                simics_control_callback(client_number, true);
+                                break;
+                            case shadow::shadow_host_message::host_message::PAUSE_SIMICS:
+                                simics_control_callback(client_number, false);
+                                break;
+                        }
+
+                        reset_buffers();
+                        start_read();
+                    } else {
+                        boost::asio::async_read(
+                            *socket, data_buffer, boost::asio::transfer_exactly(msg_size),
+                            [&, msg, msg_size](const boost::system::error_code& error, std::size_t bytes_transferred) {
+                                if (!error) {
+                                    if (data_buffer.size() == msg_size) {
+                                        switch (msg) {
+                                            case shadow::shadow_host_message::host_message::START_SIM:
+                                                if (data_buffer.size() == sizeof(shadow::shadow_config_message)) {
+                                                    const shadow::shadow_config_message* scm =
+                                                        boost::asio::buffer_cast<const shadow::shadow_config_message*>(data_buffer.data());
+                                                    power_sim_callback(client_number, true, scm->configuration_number);
+                                                } else {
+                                                    std::cerr
+                                                        << "host server client: received invalid config message size following start sim command"
+                                                        << std::endl;
+                                                    reset();
+                                                }
+
+                                                break;
+                                        }
+                                        reset_buffers();
+                                        start_read();
+                                    } else {
+                                        std::cerr << "client: received invalid data size of: " << bytes_transferred << ", expected : " << msg_size
+                                                  << std::endl;
+                                        reset();
+                                    }
+                                } else {
+                                    std::cerr << "client: encountered error when reading data: " << error.message() << std::endl;
+                                    reset();
+                                }
+                            });
+                    }
                 } else {
                     std::cerr << "host server client " << client_number << ": received invalid message size of: " << bytes_transferred
                               << ", expected: " << sizeof(shadow::shadow_host_message) << std::endl;
@@ -79,7 +171,10 @@ void HostServer::HostServerClient::start_read() {
         });
 }
 
-void HostServer::HostServerClient::reset_buffers() { message_buffer.consume(message_buffer.size()); }
+void HostServer::HostServerClient::reset_buffers() {
+    header_buffer.consume(header_buffer.size());
+    data_buffer.consume(data_buffer.size());
+}
 
 void HostServer::HostServerClient::reset() {
     if (socket) {
@@ -153,4 +248,27 @@ void HostServer::HostServerClient::write_error_handler(const boost::system::erro
         std::cerr << "host server client: " << client_number << " error writing data: " << error.message() << std::endl;
         reset();
     }
+}
+
+void HostServer::send_status_update() {
+    for (auto const& [key, val] : socket_map) {
+        val->send_status_update(client_in_control_id, sim_started, simics_playing);
+    }
+}
+
+void HostServer::HostServerClient::send_status_update(std::uint64_t client_id, bool sim_started, bool simics_playing) {
+    shadow::shadow_host_message shm;
+    shm.size = sizeof(shadow::shadow_main_status);
+    shm.message = shadow::shadow_host_message::host_message::MAIN_STATUS;
+
+    shadow::shadow_main_status sms;
+    sms.in_control = (client_id == client_number);
+    sms.simulation_started = sim_started;
+    sms.simics_playing = simics_playing;
+
+    boost::asio::async_write(*socket, boost::asio::buffer(reinterpret_cast<char*>(&shm), sizeof(shm)),
+                             std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+    boost::asio::async_write(*socket, boost::asio::buffer(reinterpret_cast<char*>(&sms), sizeof(sms)),
+                             std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
 }

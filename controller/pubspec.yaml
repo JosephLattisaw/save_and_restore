@@ -22,7 +22,9 @@ dependencies:
       path: plugins/window_size
       ref: 57a2cd88486105d3d813583339eb0e23c9bfd6d2
   cupertino_icons: ^1.0.2
+  ffi: ^1.0.0
   flutter_hooks: ^0.16.0
+  path: ^1.8.0
   provider: ^5.0.0
   xterm: 2.0.0
 

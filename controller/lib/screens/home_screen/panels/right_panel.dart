@@ -7,15 +7,14 @@ import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
 import 'package:controller/common/colors.dart';
 import 'package:controller/moc_server.dart';
+import 'package:controller/shadow_client_c_api.dart';
 
 class RightPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final server = Provider.of<Server>(context, listen: false);
+    final client = Provider.of<ShadowClientCAPI>(context, listen: false);
     final controlOfSatellite =
-        context.select((Server s) => s.controlOfSatellite);
-
-    print("prints anytime sat value is changed ${server.controlOfSatellite}");
+        context.select((ShadowClientCAPI s) => s.controlOfSatellite);
 
     return Container(
       decoration: BoxDecoration(image: _backgroundDecorationImage),
@@ -27,7 +26,7 @@ class RightPanel extends StatelessWidget {
             ControllerFloatingActionButton(
               onPressed: controlOfSatellite
                   ? null
-                  : () => server.takeControlOfSatellite(),
+                  : () => client.takeControlOfSatellite(),
               iconData: _TAKE_CONTROL_ICON,
               label: controlOfSatellite ? "In Control" : _TAKE_CONTROL_LABEL,
               backgroundColor:
