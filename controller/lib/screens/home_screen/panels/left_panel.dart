@@ -18,7 +18,7 @@ class LeftPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controlOfSatellite =
-        context.select((Server s) => s.controlOfSatellite);
+        context.select((ShadowClientCAPI s) => s.controlOfSatellite);
     final serverConnected =
         context.select((ShadowClientCAPI s) => s.serverConnected);
 
