@@ -8,12 +8,22 @@ import 'package:controller/widgets/minimal_expanding_spacer.dart';
 import 'package:controller/widgets/controller_floating_action_button.dart';
 import 'package:controller/moc_server.dart';
 import 'package:controller/shadow_client_c_api.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 class ApplicationBar extends StatelessWidget {
   void startSimulation(ShadowClientCAPI client) {
     print("app bar: starting simulation");
     client.startSimulation(0);
   }
+
+  final String title;
+  final bool showIcon;
+
+  ApplicationBar({
+    Key? key,
+    this.title = _TITLE,
+    this.showIcon = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +39,15 @@ class ApplicationBar extends StatelessWidget {
       elevation: _APP_BAR_ELEVATION,
       title: Row(
         children: [
-          Text(_TITLE),
-          Image.asset(
-            _LOGO_ASSET_FILENAME,
-            fit: _LOGO_FIT,
-            height: _LOGO_HEIGHT,
-            width: _LOGO_WIDTH,
-          ),
+          Text(title),
+          showIcon
+              ? Image.asset(
+                  _LOGO_ASSET_FILENAME,
+                  fit: _LOGO_FIT,
+                  height: _LOGO_HEIGHT,
+                  width: _LOGO_WIDTH,
+                )
+              : Container(),
           MinimalExpandingSpacer(),
           ControllerFloatingActionButton(
             onPressed: (controlOfSatellite && !simulationStarted)

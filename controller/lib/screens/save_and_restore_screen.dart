@@ -5,6 +5,7 @@ import 'package:controller/common/colors.dart';
 import 'package:controller/shadow_client_c_api.dart';
 import 'package:provider/provider.dart';
 import 'package:controller/state_maintained.dart';
+import 'package:controller/screens/home_screen/application_bar.dart';
 
 class SaveAndRestoreScreen extends HookWidget {
   @override
@@ -31,9 +32,12 @@ class SaveAndRestoreScreen extends HookWidget {
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        elevation: 10.0,
-        title: Row(children: [Text(_SAVE_AND_RESTORE_TITLE_LABEL)]),
+      appBar: PreferredSize(
+        preferredSize: AppBar().preferredSize,
+        child: ApplicationBar(
+          title: _SAVE_AND_RESTORE_TITLE_LABEL,
+          showIcon: false,
+        ),
       ),
       body: Container(
         child: Column(
