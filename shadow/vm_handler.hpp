@@ -19,7 +19,7 @@ class VMHandler {
 public:
     using VMSavedCallback = std::function<void()>;
     using VMListCallback = std::function<void(std::vector<std::string>)>;
-    using VMRunningListCallback = std::function<void(std::vector<bool>)>;
+    using VMRunningListCallback = std::function<void(std::vector<std::uint8_t>)>;
     using VMSnapsCallback = std::function<void(std::string, std::vector<std::vector<std::string>>)>;
 
     VMHandler(VMSavedCallback vm_saved_callback, VMListCallback vm_list_callback, VMRunningListCallback vm_running_list_callback,
@@ -35,13 +35,13 @@ public:
 
 private:
     std::vector<std::string> get_vm_list();
-    std::vector<bool> get_vm_running_list();
+    std::vector<std::uint8_t> get_vm_running_list();
 
     void delete_snapshot(const nsCOMPtr<IVirtualBox> &pVirtualBox, const nsCOMPtr<ISession> &pSession, std::string vm_name,
                          std::string snapshot_name);
     nsCOMPtr<IMachine> find_machine(const nsCOMPtr<IVirtualBox> &pVirtualBox, std::string vm_name);
     std::string get_vm_name(nsCOMPtr<IMachine> machine);
-    std::vector<bool> list_running_vms(const nsCOMPtr<IVirtualBox> &pVirtualBox);
+    std::vector<std::uint8_t> list_running_vms(const nsCOMPtr<IVirtualBox> &pVirtualBox);
     std::vector<std::tuple<int, std::string, std::string>> list_snapshots(const nsCOMPtr<IVirtualBox> &pVirtualBox, std::string vm_name);
     std::vector<std::string> list_vms(const nsCOMPtr<IVirtualBox> &pVirtualBox);
     void restore_vm(const nsCOMPtr<IVirtualBox> &pVirtualBox, const nsCOMPtr<ISession> &pSession, std::string vm_name, std::string snapshot_name);
@@ -60,7 +60,7 @@ private:
     nsCOMPtr<IVirtualBox> virtualBox;
 
     std::vector<std::string> vm_list;
-    std::vector<bool> vm_running_list;
+    std::vector<std::uint8_t> vm_running_list;
     std::vector<std::vector<std::string>> vm_snaps;
 
     VMSavedCallback vm_saved_callback;

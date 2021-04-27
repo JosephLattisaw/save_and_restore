@@ -33,6 +33,10 @@ void HostServer::start_async_accept() {
                     auto it = socket_map.find(client_id);
                     if (it != socket_map.end()) {
                         socket_map.erase(client_id);
+                        if (client_in_control_id == client_id) {
+                            client_in_control_id = -1;
+                            send_status_update();
+                        }
                         std::cout << "HostServer: client " << client_id << " disconnected" << std::endl;
                     } else
                         std::cerr << "HostServer: could not find socket to erase" << std::endl;
@@ -66,6 +70,7 @@ void HostServer::start_async_accept() {
             assert(it != socket_map.end());
 
             it->second->send_application_update(application_names, application_statuses);
+            it->second->send_vm_status_update(vm_list, vm_running_list);
 
             client_number_count++;
         } else {
@@ -271,4 +276,69 @@ void HostServer::HostServerClient::send_status_update(std::uint64_t client_id, b
 
     boost::asio::async_write(*socket, boost::asio::buffer(reinterpret_cast<char*>(&sms), sizeof(sms)),
                              std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void HostServer::send_vm_status_update() {
+    for (auto const& [key, val] : socket_map) {
+        val->send_vm_status_update(vm_list, vm_running_list);
+    }
+}
+
+void HostServer::HostServerClient::send_vm_status_update(std::vector<std::string> vm_list, std::vector<std::uint8_t> vm_running_list) {
+    if (vm_list.size() == vm_running_list.size()) {
+        if (socket && socket->is_open()) {
+            // creating main header
+            shadow::shadow_host_message shm;
+            shm.message = shadow::shadow_host_message::host_message::VM_LIST;
+
+            // total applications
+            shadow::shadow_total_apps sta;
+            sta.total_applications = vm_list.size();
+            shm.size += sizeof(shadow::shadow_total_apps);
+
+            std::vector<size_t> as_sizes;
+            std::vector<std::vector<std::uint8_t>> names;
+
+            for (auto i = 0; i < vm_list.size(); i++) {
+                std::vector<std::uint8_t> app_name(vm_list[i].begin(), vm_list[i].end());
+
+                as_sizes.push_back(app_name.size() * sizeof(decltype(app_name)::value_type));
+                names.push_back(app_name);
+
+                shm.size += sizeof(shadow::shadow_app_status);
+                shm.size += as_sizes.back();
+            }
+
+            // writing header
+            boost::asio::async_write(
+                *socket, boost::asio::buffer(reinterpret_cast<char*>(&shm), sizeof(shm)),
+                std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+            // writing total applications
+            boost::asio::async_write(
+                *socket, boost::asio::buffer(reinterpret_cast<char*>(&sta), sizeof(sta)),
+                std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+            for (auto i = 0; i < vm_list.size(); i++) {
+                shadow::shadow_app_status sat;
+                sat.status = static_cast<shadow::shadow_app_status::app_status>(vm_running_list[i]);
+                sat.size = as_sizes[i];
+
+                boost::asio::async_write(
+                    *socket, boost::asio::buffer(reinterpret_cast<char*>(&sat), sizeof(sat)),
+                    std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+                boost::asio::async_write(
+                    *socket, boost::asio::buffer(reinterpret_cast<char*>(names[i].data()), as_sizes[i]),
+                    std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+            }
+        } else {
+            std::cerr << "host server client: " << client_number
+                      << ", socket wasn't open while attempting to "
+                         "write, closing socket"
+                      << std::endl;
+            reset();
+        }
+    } else
+        std::cerr << "host server client: error vm list and vm_running list sizes didn't match, dropping update" << std::endl;
 }

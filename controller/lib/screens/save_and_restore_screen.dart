@@ -2,12 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:controller/common/colors.dart';
+import 'package:controller/shadow_client_c_api.dart';
+import 'package:provider/provider.dart';
 
 class SaveAndRestoreScreen extends HookWidget {
   @override
   Widget build(BuildContext context) {
+    final vmList = context.select((ShadowClientCAPI s) => s.vmList);
+    final vmRunningList =
+        context.select((ShadowClientCAPI s) => s.vmRunningList);
+
     final chosenValue = useState<int?>(null);
     final selectedRow = useState<int?>(null);
+
+    print("vm list length: ${vmList.length}");
+
+    //sanity check
+    if ((chosenValue.value ?? 0) > vmList.length ||
+        vmList.length != vmRunningList?.length) {
+      chosenValue.value = null;
+    }
 
     return Scaffold(
       extendBody: true,
@@ -60,20 +74,22 @@ class SaveAndRestoreScreen extends HookWidget {
                                         fontSize: 14.0,
                                         color: Colors.white,
                                       ),
-                                      items: [
-                                        DropdownMenuItem(
-                                          child: Text(
-                                            "First Item",
-                                            style:
-                                                TextStyle(color: Colors.white),
+                                      items:
+                                          List<DropdownMenuItem<int>>.generate(
+                                        vmList.length,
+                                        (index) => DropdownMenuItem(
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 8.0),
+                                            child: Text(
+                                              "${vmList[index]}",
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
                                           ),
-                                          value: 0,
+                                          value: index,
                                         ),
-                                        DropdownMenuItem(
-                                          child: Text("Second Item"),
-                                          value: 2,
-                                        ),
-                                      ],
+                                      ),
                                       hint: Text(
                                         "Please Choose a Machine Configuration",
                                         style: TextStyle(color: Colors.white),
@@ -100,9 +116,17 @@ class SaveAndRestoreScreen extends HookWidget {
                                     ),
                                     decoration: InputDecoration(
                                       isDense: true,
-                                      fillColor: Colors.red,
+                                      fillColor: vmRunningList?.elementAt(
+                                                  chosenValue.value ?? 0) ==
+                                              0
+                                          ? Colors.red
+                                          : Colors.green,
                                       filled: true,
-                                      hintText: "NOT RUNNING",
+                                      hintText: vmRunningList?.elementAt(
+                                                  chosenValue.value ?? 0) ==
+                                              0
+                                          ? "NOT RUNNING"
+                                          : "RUNNING",
                                       contentPadding: EdgeInsets.all(8.0),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.all(

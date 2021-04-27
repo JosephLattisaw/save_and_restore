@@ -6,6 +6,7 @@
 
 #include "host_server.hpp"
 #include "shadow_host_server_message.hpp"
+#include "vm_handler.hpp"
 
 class Shadow {
 public:
@@ -15,6 +16,8 @@ public:
     ~Shadow();
 
 private:
+    void worker_thread();
+
     // configuration
     std::vector<bool> always_host_only;
     std::vector<std::string> script_paths;
@@ -27,10 +30,14 @@ private:
     std::vector<std::shared_ptr<boost::process::child>> children;  // child processes
     std::shared_ptr<boost::process::child> kill_child;
 
-    std::unique_ptr<HostServer> host_server;
+    std::shared_ptr<HostServer> host_server;
 
     boost::asio::io_service &io_service;
     bool processing_kill = false;
+
+    std::unique_ptr<VMHandler> vm_handler;
+    boost::asio::io_service vm_service;
+    std::thread vm_handler_thread;
 };
 
 #endif

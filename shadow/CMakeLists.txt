@@ -12,8 +12,6 @@ add_definitions(-Wno-extra)
 
 find_package(Boost 1.74.0 REQUIRED COMPONENTS program_options)
 
-include_directories(/usr/local/include/BasicUsageEnvironment)
-
 find_library(VirtualBoxSDK NAMES VBoxXPCOM.so HINTS "/usr/lib/virtualbox")
 if(NOT VirtualBoxSDK)
 message(FATAL_ERROR "VirtualBoxSDK library wasn't found")

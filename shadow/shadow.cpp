@@ -7,7 +7,7 @@ Shadow::Shadow(std::vector<std::string> an, std::vector<std::string> sp, std::ve
     : application_names(an), script_paths(sp), always_host_only(aho), configurations(cfgs), arguments(args), kill_path(kp), io_service(io_service) {
     // start_all_processes();
     application_statuses = shadow::ApplicationStatusesEnum(application_names.size(), shadow::shadow_app_status::app_status::NOT_RUNNING);
-    host_server = std::make_unique<HostServer>(
+    host_server = std::make_shared<HostServer>(
         io_service, 20001, application_names, application_statuses,
         [&](bool power_sim, std::uint32_t configuration_number) {
             if (power_sim && !processing_kill) {
@@ -59,6 +59,48 @@ Shadow::Shadow(std::vector<std::string> an, std::vector<std::string> sp, std::ve
 
             host_server->send_status_update();
         });
+
+    vm_handler_thread = std::thread(std::bind(&Shadow::worker_thread, this));
 }
 
-Shadow::~Shadow() {}
+Shadow::~Shadow() {
+    vm_handler_thread.join();
+    vm_service.stop();
+}
+
+void Shadow::worker_thread() {
+    vm_handler = std::make_unique<VMHandler>(
+        [&]() {
+            // TODO vm saved callback
+            std::cout << "shadow: got vm status callback" << std::endl;
+            std::cout << "vm was saved callback" << std::endl;
+        },
+        [&](std::vector<std::string> vm_list) {
+            std::cout << "shadow: got vm list callback" << std::endl;
+            for (const auto &i : vm_list) {
+                std::cout << "vm list: " << i << std::endl;
+            }
+
+            io_service.post(std::bind(&HostServer::update_vm_list, host_server, vm_list));
+        },
+        [&](std::vector<std::uint8_t> vm_running_list) {
+            std::cout << "shadow: got vm running list callback" << std::endl;
+            for (const auto &i : vm_running_list) {
+                std::cout << "vm running list: " << ((i == 0) ? "false" : "true") << std::endl;
+            }
+
+            io_service.post(std::bind(&HostServer::update_vm_running_list, host_server, vm_running_list));
+            io_service.post(std::bind(&HostServer::send_vm_status_update, host_server));
+        },
+        [&](std::string, std::vector<std::vector<std::string>>) {
+            // TODO vm snaps callback
+            std::cout << "shadow: got vm snaps callback" << std::endl;
+        });
+
+    vm_handler->request_vm_status_update();
+
+    // This stops the thread from exiting just because we don't have any tasks that currently
+    // need completing
+    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard(vm_service.get_executor());
+    vm_service.run();
+}

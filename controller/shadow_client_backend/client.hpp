@@ -12,9 +12,10 @@ public:
     using ControlStatusCallback = std::function<void(bool)>;
     using SimulationStatusCallback = std::function<void(bool)>;
     using SimicsStatusCallback = std::function<void(bool)>;
+    using VMListCallback = std::function<void(std::vector<std::string>, shadow::ApplicationStatuses)>;
     Client(boost::asio::io_service &io_service, AppInitialStatusCallback app_initial_status_callback, ConnectionCallback connection_callback,
            ControlStatusCallback control_status_callback, SimulationStatusCallback simulation_status_callback,
-           SimicsStatusCallback simics_status_callback);
+           SimicsStatusCallback simics_status_callback, VMListCallback vm_list_callback);
 
     void start_simulation(std::uint32_t configuration);
     void stop_simulation();
@@ -36,6 +37,9 @@ private:
     shadow::ApplicationStatuses application_statuses;
     std::vector<std::string> application_names;
 
+    shadow::ApplicationStatuses vm_running_list;
+    std::vector<std::string> vm_list;
+
     boost::asio::io_service &io_service;
     boost::asio::ip::tcp::socket socket;
     boost::asio::ip::tcp::endpoint endpoint;
@@ -50,6 +54,7 @@ private:
     ControlStatusCallback control_status_callback;
     SimulationStatusCallback simulation_status_callback;
     SimicsStatusCallback simics_status_callback;
+    VMListCallback vm_list_callback;
 
     boost::asio::steady_timer timer;
     bool attempting_connection = false;

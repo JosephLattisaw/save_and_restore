@@ -3,7 +3,7 @@
 #include <iostream>
 
 Client::Client(boost::asio::io_service &io_service, AppInitialStatusCallback ais_cb, ConnectionCallback conn_cb, ControlStatusCallback cs_cb,
-               SimulationStatusCallback ss_cb, SimicsStatusCallback s_cb)
+               SimulationStatusCallback ss_cb, SimicsStatusCallback s_cb, VMListCallback vl_cb)
     : io_service(io_service),
       socket(io_service),
       endpoint(boost::asio::ip::address::from_string("127.0.0.1"), 20001),
@@ -12,6 +12,7 @@ Client::Client(boost::asio::io_service &io_service, AppInitialStatusCallback ais
       control_status_callback{cs_cb},
       simulation_status_callback{ss_cb},
       simics_status_callback{s_cb},
+      vm_list_callback{vl_cb},
       timer(io_service) {
     start_async_connect();
 }
@@ -105,6 +106,46 @@ void Client::start_read() {
                                                 application_names = apps;
                                                 application_statuses = app_statuses;
                                                 app_initial_status_callback(application_names, application_statuses);
+                                            } else {
+                                                std::cerr << "client: app size doesn't equal app statuses size?" << std::endl;
+                                                reset();
+                                                return;
+                                            }
+                                        } break;
+                                        case shadow::shadow_host_message::host_message::VM_LIST: {
+                                            std::cout << "client: received vm list message" << std::endl;
+                                            const std::uint8_t *data = boost::asio::buffer_cast<const std::uint8_t *>(data_buffer.data());
+
+                                            const shadow::shadow_total_apps *sta = reinterpret_cast<const shadow::shadow_total_apps *>(&data[0]);
+
+                                            std::cout << "client: total virtual machines: " << sta->total_applications << std::endl;
+
+                                            auto it = sizeof(shadow::shadow_total_apps);
+                                            std::vector<std::string> vms;
+                                            shadow::ApplicationStatuses app_statuses;
+                                            for (auto i = 0; i < sta->total_applications; i++) {
+                                                const shadow::shadow_app_status *sat = reinterpret_cast<const shadow::shadow_app_status *>(&data[it]);
+
+                                                std::cout << "client: virtual machine name size: " << sat->size << std::endl;
+                                                std::cout << "client: virtual machine status: " << static_cast<int>(sat->status) << std::endl;
+
+                                                app_statuses.push_back(static_cast<shadow::app_status_t>(sat->status));
+
+                                                it += sizeof(shadow::shadow_app_status);
+
+                                                std::string name(&data[it], &data[it] + sat->size);
+                                                vms.push_back(name);
+                                                std::cout << "client: vm name: " << name << std::endl;
+                                                it += sat->size;
+                                            }
+
+                                            if (vms.size() == app_statuses.size()) {
+                                                std::cout << "client: received valid vm "
+                                                             "data update"
+                                                          << std::endl;
+                                                vm_list = vms;
+                                                vm_running_list = app_statuses;
+                                                vm_list_callback(vm_list, vm_running_list);
                                             } else {
                                                 std::cerr << "client: app size doesn't equal app statuses size?" << std::endl;
                                                 reset();

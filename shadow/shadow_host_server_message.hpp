@@ -16,6 +16,7 @@ struct shadow_host_message {
         STOP_SIM = 4,
         PLAY_SIMICS = 5,
         PAUSE_SIMICS = 6,
+        VM_LIST = 7,
     } message;
 };
 

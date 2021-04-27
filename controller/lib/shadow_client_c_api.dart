@@ -13,9 +13,11 @@ typedef StartWorkType = ffi.Void Function(
     ffi.Int64 port3,
     ffi.Int64 port4,
     ffi.Int64 port5,
-    ffi.Int64 port6);
+    ffi.Int64 port6,
+    ffi.Int64 port7,
+    ffi.Int64 port8);
 typedef StartWorkFunc = void Function(int using_dart, int port1, int port2,
-    int port3, int port4, int port5, int port6);
+    int port3, int port4, int port5, int port6, int port7, int port8);
 
 //FFI signature for void function
 typedef Void_Function_FFI = ffi.Void Function();
@@ -105,6 +107,40 @@ class ShadowClientCAPI extends ChangeNotifier {
       });
     int simicsStatusNativePort = simicsStatusPort.sendPort.nativePort;
 
+    ReceivePort vmRunningListPort = ReceivePort()
+      ..listen((data) {
+        print(
+            'received vm running list status ${data.length}, type: ${data.runtimeType}');
+        tempVMrunningList = data.toList();
+      });
+    int vmRunningListNativePort = vmRunningListPort.sendPort.nativePort;
+
+    ReceivePort vmListPort = ReceivePort()
+      ..listen((name) {
+        print('received name: $name');
+        tempVMList.add(name);
+        print("tempVMList length: ${tempVMList.length}");
+        if (tempVMrunningList != null) {
+          print("tempVMRunninList length: ${tempVMrunningList?.length}");
+        }
+
+        if (tempVMList.length == tempVMrunningList?.length) {
+          print("they are both the same size!");
+          vmList = List<String>.from(tempVMList);
+          vmRunningList =
+              List<int>.from(tempVMrunningList ?? List<int>.empty());
+
+          tempVMList.clear();
+          tempVMrunningList?.clear();
+
+          print("vmList length: ${vmList.length}");
+          print("vmRunningList length: ${vmRunningList?.length}");
+          notifyListeners();
+        }
+      });
+
+    int vmListNativePort = vmListPort.sendPort.nativePort;
+
     StartWorkFunc client = lib
         .lookup<ffi.NativeFunction<StartWorkType>>("create_client")
         .asFunction();
@@ -140,12 +176,20 @@ class ShadowClientCAPI extends ChangeNotifier {
         connectionNativePort,
         controlStatusNativePort,
         simStatusNativePort,
-        simicsStatusNativePort);
+        simicsStatusNativePort,
+        vmRunningListNativePort,
+        vmListNativePort);
     runIOService();
   }
 
   static const String _LIBRARY_NAME =
       '/home/efsi/projects/dev/save_and_restore/controller/shadow_client_backend/build/libshadow_client_backend.so';
+
+  List<int>? tempVMrunningList;
+  List<String> tempVMList = List.empty(growable: true);
+
+  List<int>? vmRunningList;
+  List<String> vmList = List.empty(growable: true);
 }
 
 ShadowClientCAPI? shadowClientCAPI;

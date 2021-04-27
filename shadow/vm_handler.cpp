@@ -4,18 +4,6 @@
 
 VMHandler::VMHandler(VMSavedCallback vsav_cb, VMListCallback vlst_cb, VMRunningListCallback vrl_cb, VMSnapsCallback vsnp_cb)
     : vm_saved_callback(vsav_cb), vm_list_callback(vlst_cb), vm_running_list_callback(vrl_cb), vm_snaps_callback(vsnp_cb) {
-    // this is enough to free the IVirtualBox instance -- smart pointers rule!
-    virtualBox = nullptr;
-    session = nullptr;
-
-    eventQ->ProcessPendingEvents();
-
-    //
-    //     Perform the standard XPCOM shutdown procedure.
-    //
-    NS_ShutdownXPCOM(nullptr);
-    std::cout << "vm handler: finished setting up virtualbox instance" << std::endl;
-
     //     Check that PRUnichar is equal in size to what compiler composes L""
     //     strings from; otherwise NS_LITERAL_STRING macros won't work correctly
     //     and we will get a meaningless SIGSEGV. This, of course, must be checked
@@ -116,7 +104,7 @@ void VMHandler::request_vm_status_update() {
 
 std::vector<std::string> VMHandler::get_vm_list() { return list_vms(virtualBox); }
 
-std::vector<bool> VMHandler::get_vm_running_list() { return list_running_vms(virtualBox); }
+std::vector<std::uint8_t> VMHandler::get_vm_running_list() { return list_running_vms(virtualBox); }
 
 void VMHandler::get_vm_snaps(std::string vm) {
     vm_snaps.clear();
@@ -241,9 +229,9 @@ std::string VMHandler::get_vm_name(nsCOMPtr<IMachine> machine) {
     return vm_name;
 }
 
-std::vector<bool> VMHandler::list_running_vms(const nsCOMPtr<IVirtualBox> &pVirtualBox) {
+std::vector<std::uint8_t> VMHandler::list_running_vms(const nsCOMPtr<IVirtualBox> &pVirtualBox) {
     nsresult rc;
-    std::vector<bool> vm_running_list;
+    std::vector<std::uint8_t> vm_running_list;
 
     IMachine **machines = nullptr;
     PRUint32 machine_cnt = 0;
