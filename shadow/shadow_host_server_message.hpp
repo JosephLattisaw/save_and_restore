@@ -25,6 +25,7 @@ struct shadow_main_status {
     std::uint8_t simulation_started = false;
     std::uint8_t simics_playing = false;
     std::uint64_t config_number = 0;
+    std::uint8_t vm_running = false;
 };
 
 struct shadow_total_apps {

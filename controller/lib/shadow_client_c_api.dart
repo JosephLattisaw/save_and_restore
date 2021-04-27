@@ -15,9 +15,20 @@ typedef StartWorkType = ffi.Void Function(
     ffi.Int64 port5,
     ffi.Int64 port6,
     ffi.Int64 port7,
-    ffi.Int64 port8);
-typedef StartWorkFunc = void Function(int using_dart, int port1, int port2,
-    int port3, int port4, int port5, int port6, int port7, int port8);
+    ffi.Int64 port8,
+    ffi.Int64 port9);
+
+typedef StartWorkFunc = void Function(
+    int using_dart,
+    int port1,
+    int port2,
+    int port3,
+    int port4,
+    int port5,
+    int port6,
+    int port7,
+    int port8,
+    int port9);
 
 //FFI signature for void function
 typedef Void_Function_FFI = ffi.Void Function();
@@ -32,12 +43,23 @@ class ShadowClientCAPI extends ChangeNotifier {
   bool controlOfSatellite = false;
   bool simulationStarted = false;
   bool simicsPlaying = false;
+  bool vmRunning = false;
 
   late Void_Function_C takeControlOfSatellite;
   late StartSim_C startSimulation;
   late Void_Function_C stopSimulation;
   late Void_Function_C startSimics;
   late Void_Function_C pauseSimics;
+
+  void resetAll() {
+    serverConnected = false;
+    controlOfSatellite = false;
+    simulationStarted = false;
+    simicsPlaying = false;
+    vmRunning = false;
+    vmRunningList = null;
+    vmList.clear();
+  }
 
   ShadowClientCAPI() {
     print("created shadow client");
@@ -72,6 +94,7 @@ class ShadowClientCAPI extends ChangeNotifier {
         print('connection port status change: $status');
         if (status != serverConnected) {
           serverConnected = status;
+          if (serverConnected == false) resetAll();
           notifyListeners();
         }
       });
@@ -140,6 +163,13 @@ class ShadowClientCAPI extends ChangeNotifier {
 
     int vmListNativePort = vmListPort.sendPort.nativePort;
 
+    ReceivePort vmRunningPort = ReceivePort()
+      ..listen((status) {
+        print("vm running: $status");
+      });
+
+    int vmRunningNativePort = vmRunningPort.sendPort.nativePort;
+
     StartWorkFunc client = lib
         .lookup<ffi.NativeFunction<StartWorkType>>("create_client")
         .asFunction();
@@ -177,7 +207,8 @@ class ShadowClientCAPI extends ChangeNotifier {
         simStatusNativePort,
         simicsStatusNativePort,
         vmRunningListNativePort,
-        vmListNativePort);
+        vmListNativePort,
+        vmRunningNativePort);
     runIOService();
   }
 

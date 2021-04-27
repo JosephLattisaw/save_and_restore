@@ -3,7 +3,7 @@
 #include <iostream>
 
 Client::Client(boost::asio::io_service &io_service, AppInitialStatusCallback ais_cb, ConnectionCallback conn_cb, ControlStatusCallback cs_cb,
-               SimulationStatusCallback ss_cb, SimicsStatusCallback s_cb, VMListCallback vl_cb)
+               SimulationStatusCallback ss_cb, SimicsStatusCallback s_cb, VMListCallback vl_cb, VMRunningCallback vr_cb)
     : io_service(io_service),
       socket(io_service),
       endpoint(boost::asio::ip::address::from_string("127.0.0.1"), 20001),
@@ -13,6 +13,7 @@ Client::Client(boost::asio::io_service &io_service, AppInitialStatusCallback ais
       simulation_status_callback{ss_cb},
       simics_status_callback{s_cb},
       vm_list_callback{vl_cb},
+      vm_running_callback{vr_cb},
       timer(io_service) {
     start_async_connect();
 }
@@ -158,6 +159,7 @@ void Client::start_read() {
                                             control_status_callback(shs->in_control);
                                             simulation_status_callback(shs->simulation_started);
                                             simics_status_callback(shs->simics_playing);
+                                            vm_running_callback(shs->vm_running);
                                         } break;
                                         default:
                                             std::cerr << "client: error unknown message: " << static_cast<int>(msg) << std::endl;

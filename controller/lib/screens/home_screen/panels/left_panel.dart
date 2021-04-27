@@ -15,12 +15,31 @@ import 'package:controller/moc_server.dart';
 import 'package:controller/shadow_client_c_api.dart';
 
 class LeftPanel extends StatelessWidget {
+  bool saveAndRestoreActive(BuildContext context) {
+    final c_api = Provider.of<ShadowClientCAPI>(context, listen: false);
+
+    return c_api.controlOfSatellite &&
+        ((c_api.vmRunning && c_api.simulationStarted) ||
+            !c_api.simulationStarted);
+  }
+
   @override
   Widget build(BuildContext context) {
     final controlOfSatellite =
         context.select((ShadowClientCAPI s) => s.controlOfSatellite);
     final serverConnected =
         context.select((ShadowClientCAPI s) => s.serverConnected);
+    final vmRunning = context.select((ShadowClientCAPI s) => s.vmRunning);
+    final simulationStarted =
+        context.select((ShadowClientCAPI s) => s.simulationStarted);
+
+    final loh = controlOfSatellite &&
+        ((vmRunning && simulationStarted) || !simulationStarted);
+
+    print("lp: control: $controlOfSatellite");
+    print("lp: vmrunning: $vmRunning");
+    print("lp: sim started: $simulationStarted");
+    print("lp: logic: ${loh}");
 
     return Padding(
       padding: _DEFAULT_PADDING,
@@ -31,14 +50,15 @@ class LeftPanel extends StatelessWidget {
           table_widget.TableWidget(),
           MinimalExpandingSpacer(),
           ControllerFloatingActionButton(
-            onPressed: controlOfSatellite
+            onPressed: saveAndRestoreActive(context)
                 ? () =>
                     RouterUtility.routerUtility(context, SaveAndRestoreScreen())
                 : null,
             iconData: _SAVE_AND_RESTORE_ICON,
             label: _SAVE_AND_RESTORE_LABEL,
-            backgroundColor:
-                controlOfSatellite ? primarySwatch : Colors.grey.shade900,
+            backgroundColor: saveAndRestoreActive(context)
+                ? primarySwatch
+                : Colors.grey.shade900,
             elevation: _SAVE_AND_RESTORE_ELEVATION,
           ),
           SizedBox(height: _DEFAULT_SPACER_HEIGHT),
