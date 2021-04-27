@@ -2,8 +2,14 @@
 
 #include <iostream>
 
-VMHandler::VMHandler(VMSavedCallback vsav_cb, VMListCallback vlst_cb, VMRunningListCallback vrl_cb, VMSnapsCallback vsnp_cb)
-    : vm_saved_callback(vsav_cb), vm_list_callback(vlst_cb), vm_running_list_callback(vrl_cb), vm_snaps_callback(vsnp_cb) {
+VMHandler::VMHandler(VMSavedCallback vsav_cb, VMListCallback vlst_cb, VMRunningListCallback vrl_cb, VMSnapsCallback vsnp_cb,
+                     boost::asio::io_service &io_service)
+    : vm_saved_callback(vsav_cb),
+      vm_list_callback(vlst_cb),
+      vm_running_list_callback(vrl_cb),
+      vm_snaps_callback(vsnp_cb),
+      io_service(io_service),
+      vm_status_timer(io_service) {
     //     Check that PRUnichar is equal in size to what compiler composes L""
     //     strings from; otherwise NS_LITERAL_STRING macros won't work correctly
     //     and we will get a meaningless SIGSEGV. This, of course, must be checked
@@ -78,6 +84,8 @@ VMHandler::VMHandler(VMSavedCallback vsav_cb, VMListCallback vlst_cb, VMRunningL
         std::exit(EXIT_FAILURE);
     }
     std::cout << "vm handler: Session object created" << std::endl;
+
+    start_vm_status_timer();
 }
 
 VMHandler::~VMHandler() {
@@ -92,6 +100,14 @@ VMHandler::~VMHandler() {
     //
     NS_ShutdownXPCOM(nullptr);
     std::cout << "vm handler: Done!" << std::endl;
+}
+
+void VMHandler::start_vm_status_timer() {
+    vm_status_timer.expires_after(std::chrono::seconds(1));
+    vm_status_timer.async_wait([&](const boost::system::error_code &error) {
+        request_vm_status_update();
+        start_vm_status_timer();
+    });
 }
 
 void VMHandler::request_vm_status_update() {

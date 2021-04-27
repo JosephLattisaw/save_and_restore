@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:controller/common/colors.dart';
 import 'package:controller/shadow_client_c_api.dart';
 import 'package:provider/provider.dart';
+import 'package:controller/state_maintained.dart';
 
 class SaveAndRestoreScreen extends HookWidget {
   @override
@@ -12,16 +13,21 @@ class SaveAndRestoreScreen extends HookWidget {
     final vmRunningList =
         context.select((ShadowClientCAPI s) => s.vmRunningList);
 
-    final chosenValue = useState<int?>(null);
-    final selectedRow = useState<int?>(null);
+    final chosenValueInitial =
+        Provider.of<StateMaintained>(context, listen: false);
 
-    print("vm list length: ${vmList.length}");
+    final chosenValue =
+        useState<int?>(chosenValueInitial.saveAndRestoreLastConfig);
+    final selectedRow = useState<int?>(null);
 
     //sanity check
     if ((chosenValue.value ?? 0) > vmList.length ||
         vmList.length != vmRunningList?.length) {
       chosenValue.value = null;
     }
+
+    //saving values
+    chosenValueInitial.saveAndRestoreLastConfig = chosenValue.value;
 
     return Scaffold(
       extendBody: true,

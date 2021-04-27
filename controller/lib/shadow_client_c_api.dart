@@ -109,23 +109,22 @@ class ShadowClientCAPI extends ChangeNotifier {
 
     ReceivePort vmRunningListPort = ReceivePort()
       ..listen((data) {
-        print(
-            'received vm running list status ${data.length}, type: ${data.runtimeType}');
+        //print('received vm running list status ${data.length}, type: ${data.runtimeType}');
         tempVMrunningList = data.toList();
       });
     int vmRunningListNativePort = vmRunningListPort.sendPort.nativePort;
 
     ReceivePort vmListPort = ReceivePort()
       ..listen((name) {
-        print('received name: $name');
+        //print('received name: $name');
         tempVMList.add(name);
-        print("tempVMList length: ${tempVMList.length}");
+        //print("tempVMList length: ${tempVMList.length}");
         if (tempVMrunningList != null) {
-          print("tempVMRunninList length: ${tempVMrunningList?.length}");
+          //print("tempVMRunninList length: ${tempVMrunningList?.length}");
         }
 
         if (tempVMList.length == tempVMrunningList?.length) {
-          print("they are both the same size!");
+          //print("they are both the same size!");
           vmList = List<String>.from(tempVMList);
           vmRunningList =
               List<int>.from(tempVMrunningList ?? List<int>.empty());
@@ -133,8 +132,8 @@ class ShadowClientCAPI extends ChangeNotifier {
           tempVMList.clear();
           tempVMrunningList?.clear();
 
-          print("vmList length: ${vmList.length}");
-          print("vmRunningList length: ${vmRunningList?.length}");
+          //print("vmList length: ${vmList.length}");
+          //print("vmRunningList length: ${vmRunningList?.length}");
           notifyListeners();
         }
       });

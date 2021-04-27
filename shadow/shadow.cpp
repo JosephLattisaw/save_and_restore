@@ -95,7 +95,8 @@ void Shadow::worker_thread() {
         [&](std::string, std::vector<std::vector<std::string>>) {
             // TODO vm snaps callback
             std::cout << "shadow: got vm snaps callback" << std::endl;
-        });
+        },
+        vm_service);
 
     vm_handler->request_vm_status_update();
 

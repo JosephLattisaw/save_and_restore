@@ -16,7 +16,7 @@ boost::asio::io_service io_service;
 std::shared_ptr<Client> client;
 
 static void FreeFinalizer(void *, void *value) {
-    std::cout << "FreeFinalizer called: " << value << std::endl;
+    // std::cout << "FreeFinalizer called: " << value << std::endl;
     std::cout << std::flush;
     fflush(stdout);
     free(value);
@@ -35,12 +35,12 @@ static void post_data_object(std::int64_t port, std::vector<std::uint8_t> data) 
     dart_object.value.as_external_typed_data.peer = request_buffer;
     dart_object.value.as_external_typed_data.callback = FreeFinalizer;
 
-    std::cout << "posting application size statuses to port: " << port << std::endl;
+    // std::cout << "posting application size statuses to port: " << port << std::endl;
     Dart_PostCObject_DL(port, &dart_object);
 }
 
 static void post_data_string(std::int64_t port, std::string str) {
-    std::cout << "posting name: " << str << std::endl;
+    // std::cout << "posting name: " << str << std::endl;
 
     Dart_CObject dart_object;
     dart_object.type = Dart_CObject_kString;
@@ -85,8 +85,8 @@ void create_client(bool using_dart = false, std::int64_t initial_status_port = 0
             [&, using_dart, simics_status_port](bool simics_status) {
                 if (using_dart) post_data_bool(simics_status_port, simics_status);
             },
-            [&, vm_running_list_port, vm_list_port](std::vector<std::string> names, shadow::ApplicationStatuses statuses) {
-                std::cout << "c_api: got vm list of size: " << names.size() << std::endl;
+            [&, using_dart, vm_running_list_port, vm_list_port](std::vector<std::string> names, shadow::ApplicationStatuses statuses) {
+                // std::cout << "c_api: got vm list of size: " << names.size() << std::endl;
                 if (using_dart) {
                     post_data_object(vm_running_list_port, std::vector<std::uint8_t>(statuses.begin(), statuses.end()));
                     for (auto i : names) post_data_string(vm_list_port, i);

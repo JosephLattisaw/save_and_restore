@@ -10,6 +10,7 @@ import 'package:controller/screens/home_screen/home_screen.dart';
 import 'package:controller/moc_server.dart';
 
 import 'package:controller/shadow_client_c_api.dart' as c_api;
+import 'package:controller/state_maintained.dart';
 
 void main() {
   runApp(MyApp());
@@ -29,6 +30,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => c_api.ShadowClientCAPI(),
           lazy: false,
+        ),
+        ChangeNotifierProvider(
+          create: (_) => StateMaintained(),
         ),
       ],
       child: MaterialApp(

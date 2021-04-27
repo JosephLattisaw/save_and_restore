@@ -15,6 +15,9 @@
 // XPCOM Interface
 #include "VirtualBox_XPCOM.h"
 
+// boost includes
+#include <boost/asio.hpp>
+
 class VMHandler {
 public:
     using VMSavedCallback = std::function<void()>;
@@ -23,7 +26,7 @@ public:
     using VMSnapsCallback = std::function<void(std::string, std::vector<std::vector<std::string>>)>;
 
     VMHandler(VMSavedCallback vm_saved_callback, VMListCallback vm_list_callback, VMRunningListCallback vm_running_list_callback,
-              VMSnapsCallback vm_snaps_callback);
+              VMSnapsCallback vm_snaps_callback, boost::asio::io_service &io_service);
     ~VMHandler();
 
     void get_vm_snaps(std::string vm);
@@ -36,6 +39,7 @@ public:
 private:
     std::vector<std::string> get_vm_list();
     std::vector<std::uint8_t> get_vm_running_list();
+    void start_vm_status_timer();
 
     void delete_snapshot(const nsCOMPtr<IVirtualBox> &pVirtualBox, const nsCOMPtr<ISession> &pSession, std::string vm_name,
                          std::string snapshot_name);
@@ -67,6 +71,9 @@ private:
     VMListCallback vm_list_callback;
     VMRunningListCallback vm_running_list_callback;
     VMSnapsCallback vm_snaps_callback;
+
+    boost::asio::io_service &io_service;
+    boost::asio::steady_timer vm_status_timer;
 };
 
 #endif
