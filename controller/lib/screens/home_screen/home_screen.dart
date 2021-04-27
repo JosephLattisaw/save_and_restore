@@ -6,12 +6,15 @@ import 'package:controller/screens/home_screen/panels/right_panel.dart';
 import 'package:controller/screens/home_screen/panels/left_panel.dart';
 import 'package:controller/screens/home_screen/panels/tab_panel.dart';
 import 'package:provider/provider.dart';
+import 'package:controller/shadow_client_c_api.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final client = Provider.of<ShadowClientCAPI>(context, listen: false);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: AppBar().preferredSize,

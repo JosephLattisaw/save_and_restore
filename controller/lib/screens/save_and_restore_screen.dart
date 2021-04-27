@@ -8,6 +8,11 @@ import 'package:controller/state_maintained.dart';
 import 'package:controller/screens/home_screen/application_bar.dart';
 
 class SaveAndRestoreScreen extends HookWidget {
+  bool unSaveableState(BuildContext context) {
+    final server = Provider.of<ShadowClientCAPI>(context, listen: false);
+    return (server.simicsPlaying || !server.vmRunning);
+  }
+
   @override
   Widget build(BuildContext context) {
     final vmList = context.select((ShadowClientCAPI s) => s.vmList);
@@ -17,9 +22,38 @@ class SaveAndRestoreScreen extends HookWidget {
     final chosenValueInitial =
         Provider.of<StateMaintained>(context, listen: false);
 
+    final client = Provider.of<ShadowClientCAPI>(context, listen: false);
+
     final chosenValue =
         useState<int?>(chosenValueInitial.saveAndRestoreLastConfig);
     final selectedRow = useState<int?>(null);
+
+    final serverConnected =
+        context.select((ShadowClientCAPI s) => s.serverConnected);
+    final controlOfSatellite =
+        context.select((ShadowClientCAPI s) => s.controlOfSatellite);
+    final simulationStarted =
+        context.select((ShadowClientCAPI s) => s.simulationStarted);
+    final vmRunning = context.select((ShadowClientCAPI s) => s.vmRunning);
+    final simicsPlaying =
+        context.select((ShadowClientCAPI s) => s.simicsPlaying);
+
+    final saveFilenameTextController =
+        useMemoized(() => TextEditingController());
+    final descFilenameTextController =
+        useMemoized(() => TextEditingController());
+
+    if (!serverConnected ||
+        !controlOfSatellite ||
+        (simulationStarted && !vmRunning)) {
+      print("sr: popping navigator");
+      Navigator.of(context).maybePop();
+    }
+
+    if (unSaveableState(context)) {
+      saveFilenameTextController.clear();
+      descFilenameTextController.clear();
+    }
 
     //sanity check
     if ((chosenValue.value ?? 0) > vmList.length ||
@@ -37,6 +71,7 @@ class SaveAndRestoreScreen extends HookWidget {
         child: ApplicationBar(
           title: _SAVE_AND_RESTORE_TITLE_LABEL,
           showIcon: false,
+          showStartStop: false,
         ),
       ),
       body: Container(
@@ -164,7 +199,11 @@ class SaveAndRestoreScreen extends HookWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text("Save Configuration"),
+                    Text(
+                      "Save Configuration",
+                      style: TextStyle(
+                          color: simicsPlaying ? Colors.white : Colors.grey),
+                    ),
                     SizedBox(height: 8.0),
                     Container(
                       decoration: BoxDecoration(
@@ -182,10 +221,18 @@ class SaveAndRestoreScreen extends HookWidget {
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           children: [
-                            Text("Name:"),
+                            Text(
+                              "Name:",
+                              style: TextStyle(
+                                color:
+                                    simicsPlaying ? Colors.white : Colors.grey,
+                              ),
+                            ),
                             SizedBox(width: 8.0),
                             Flexible(
                               child: TextFormField(
+                                enabled: !unSaveableState(context),
+                                controller: saveFilenameTextController,
                                 inputFormatters: [
                                   //max filename length linux
                                   LengthLimitingTextInputFormatter(255),
@@ -208,10 +255,18 @@ class SaveAndRestoreScreen extends HookWidget {
                               ),
                             ),
                             Expanded(child: SizedBox(width: 1.0)),
-                            Text("Description:"),
+                            Text(
+                              "Description:",
+                              style: TextStyle(
+                                color:
+                                    simicsPlaying ? Colors.white : Colors.grey,
+                              ),
+                            ),
                             SizedBox(width: 8.0),
                             Flexible(
                               child: TextFormField(
+                                controller: descFilenameTextController,
+                                enabled: !unSaveableState(context),
                                 style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 14.0,

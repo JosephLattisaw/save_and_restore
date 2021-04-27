@@ -11,18 +11,20 @@ import 'package:controller/shadow_client_c_api.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 class ApplicationBar extends StatelessWidget {
-  void startSimulation(ShadowClientCAPI client) {
+  /*void startSimulation(ShadowClientCAPI client) {
     print("app bar: starting simulation");
     client.startSimulation(0);
-  }
+  }*/
 
   final String title;
   final bool showIcon;
+  final bool showStartStop;
 
   ApplicationBar({
     Key? key,
     this.title = _TITLE,
     this.showIcon = true,
+    this.showStartStop = true,
   }) : super(key: key);
 
   @override
@@ -49,39 +51,45 @@ class ApplicationBar extends StatelessWidget {
                 )
               : Container(),
           MinimalExpandingSpacer(),
-          ControllerFloatingActionButton(
-            onPressed: (controlOfSatellite && !simulationStarted)
-                ? () => startSimulation(client)
-                : null,
-            label: _START_LABEL,
-            iconData: _START_ICON,
-            backgroundColor: (controlOfSatellite && !simulationStarted)
-                ? _floatingActionButtonBackgroundColor
-                : Colors.grey.shade900,
-            tooltip: _START_TOOLTIP,
-          ),
+          this.showStartStop
+              ? ControllerFloatingActionButton(
+                  onPressed: (controlOfSatellite && !simulationStarted)
+                      ? () => client.startSimulation(0)
+                      : null,
+                  label: _START_LABEL,
+                  iconData: _START_ICON,
+                  backgroundColor: (controlOfSatellite && !simulationStarted)
+                      ? _floatingActionButtonBackgroundColor
+                      : Colors.grey.shade900,
+                  tooltip: _START_TOOLTIP,
+                )
+              : Container(),
           _appBarSpacer(),
-          ControllerFloatingActionButton(
-            onPressed: (controlOfSatellite && simulationStarted)
-                ? () => client.stopSimulation()
-                : null,
-            label: _STOP_LABEL,
-            iconData: _STOP_ICON,
-            backgroundColor: (controlOfSatellite && simulationStarted)
-                ? _floatingActionButtonBackgroundColor
-                : Colors.grey.shade900,
-            tooltip: _STOP_TOOLTIP,
-          ),
-          SizedBox(
-            width: _VERTICAL_DIVIDER_BOX_WIDTH,
-            height: AppBar().preferredSize.height *
-                _VERTICAL_DIVIDER_HEIGHT_PERCENTAGE,
-            child: VerticalDivider(
-              color: Colors.black.withOpacity(_VERTICAL_DIVIDER_OPACITY),
-              width: _VERTICAL_DIVIDER_WIDTH,
-              thickness: _VERTICAL_DIVIDER_THICKNESS,
-            ),
-          ),
+          this.showStartStop
+              ? ControllerFloatingActionButton(
+                  onPressed: (controlOfSatellite && simulationStarted)
+                      ? () => client.stopSimulation()
+                      : null,
+                  label: _STOP_LABEL,
+                  iconData: _STOP_ICON,
+                  backgroundColor: (controlOfSatellite && simulationStarted)
+                      ? _floatingActionButtonBackgroundColor
+                      : Colors.grey.shade900,
+                  tooltip: _STOP_TOOLTIP,
+                )
+              : Container(),
+          this.showStartStop
+              ? SizedBox(
+                  width: _VERTICAL_DIVIDER_BOX_WIDTH,
+                  height: AppBar().preferredSize.height *
+                      _VERTICAL_DIVIDER_HEIGHT_PERCENTAGE,
+                  child: VerticalDivider(
+                    color: Colors.black.withOpacity(_VERTICAL_DIVIDER_OPACITY),
+                    width: _VERTICAL_DIVIDER_WIDTH,
+                    thickness: _VERTICAL_DIVIDER_THICKNESS,
+                  ),
+                )
+              : Container(),
           ControllerFloatingActionButton(
             onPressed:
                 (controlOfSatellite && simulationStarted && simicsPlaying)
