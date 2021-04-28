@@ -90,11 +90,10 @@ void Shadow::worker_thread() {
             }
 
             io_service.post(std::bind(&HostServer::update_vm_running_list, host_server, vm_running_list));
-            io_service.post(std::bind(&HostServer::send_vm_status_update, host_server));
         },
-        [&](std::string, std::vector<std::vector<std::string>>) {
-            // TODO vm snaps callback
-            std::cout << "shadow: got vm snaps callback" << std::endl;
+        [&](std::vector<std::vector<std::vector<std::string>>> vm_snaps_list) {
+            io_service.post(std::bind(&HostServer::update_vm_snaps_list, host_server, vm_snaps_list));
+            io_service.post(std::bind(&HostServer::send_vm_status_update, host_server));
         },
         vm_service);
 

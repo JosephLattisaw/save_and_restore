@@ -48,6 +48,15 @@ static void post_data_string(std::int64_t port, std::string str) {
     Dart_PostCObject_DL(port, &dart_object);
 }
 
+static void post_data_int(std::int64_t port, int val) {
+    std::cout << "posting int: " << val << std::endl;
+
+    Dart_CObject dart_object;
+    dart_object.type = Dart_CObject_kInt64;
+    dart_object.value.as_int64 = val;
+    Dart_PostCObject_DL(port, &dart_object);
+}
+
 static void post_data_bool(std::int64_t port, bool value) {
     std::cout << "posting bool: " << value << std::endl;
 
@@ -62,7 +71,7 @@ extern "C" {
 void create_client(bool using_dart = false, std::int64_t initial_status_port = 0, std::int64_t initial_names_port = 0,
                    std::int64_t connection_port = 0, std::int64_t control_status_port = 0, std::int64_t sim_status_port = 0,
                    std::int64_t simics_status_port = 0, std::int64_t vm_running_list_port = 0, std::int64_t vm_list_port = 0,
-                   std::int64_t vm_running_port = 0) {
+                   std::int64_t vm_running_port = 0, std::int64_t snap_names_port = 0, std::int64_t snap_desc_port = 0) {
     if (!client)
         client = std::make_shared<Client>(
             io_service,
@@ -86,11 +95,21 @@ void create_client(bool using_dart = false, std::int64_t initial_status_port = 0
             [&, using_dart, simics_status_port](bool simics_status) {
                 if (using_dart) post_data_bool(simics_status_port, simics_status);
             },
-            [&, using_dart, vm_running_list_port, vm_list_port](std::vector<std::string> names, shadow::ApplicationStatuses statuses) {
-                // std::cout << "c_api: got vm list of size: " << names.size() << std::endl;
+            [&, using_dart, vm_running_list_port, vm_list_port, snap_names_port, snap_desc_port](
+                std::vector<std::string> names, shadow::ApplicationStatuses statuses, std::vector<std::vector<std::string>> snap_names,
+                std::vector<std::vector<std::string>> snap_desc) {
+                std::cout << "c_api: got vm list of size: " << names.size() << std::endl;
                 if (using_dart) {
                     post_data_object(vm_running_list_port, std::vector<std::uint8_t>(statuses.begin(), statuses.end()));
                     for (auto i : names) post_data_string(vm_list_port, i);
+                    for (auto names : snap_names) {
+                        post_data_int(snap_names_port, names.size());
+                        for (auto k : names) post_data_string(snap_names_port, k);
+                    }
+                    for (auto descs : snap_desc) {
+                        post_data_int(snap_desc_port, descs.size());
+                        for (auto k : descs) post_data_string(snap_desc_port, k);
+                    }
                 }
             },
             [&, using_dart, vm_running_port](bool vm_running) {
@@ -133,6 +152,14 @@ void pause_simics() {
 void take_control() {
     std::cout << "taking contro;() " << std::endl;
     if (client) io_service.post(std::bind(&Client::take_control, client));
+}
+
+void get_vm_snaps(const char *str, int len) { std::cout << str << " , len: " << len << std::endl; }
+
+void restore(const char *vm, int vm_len, const char *snap, int restore_len) {
+    std::cout << "received restore command" << std::endl;
+    std::cout << "vm: " << vm << std::endl;
+    std::cout << "snap: " << snap << std::endl;
 }
 
 DART_EXPORT intptr_t InitializeDartApi(void *data) { return Dart_InitializeApiDL(data); }

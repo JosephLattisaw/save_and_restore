@@ -22,6 +22,7 @@ public:
     void update_sim(bool status) { sim_started = status; }
     void update_vm_list(std::vector<std::string> list) { vm_list = list; }
     void update_vm_running_list(std::vector<std::uint8_t> list) { vm_running_list = list; }
+    void update_vm_snaps_list(std::vector<std::vector<std::vector<std::string>>> list) { vm_snaps_list = list; }
 
 private:
     class HostServerClient {
@@ -36,7 +37,8 @@ private:
 
         void send_application_update(std::vector<std::string> application_names, shadow::ApplicationStatusesEnum application_statuses);
         void send_status_update(std::uint64_t client_id, bool sim_started, bool simics_playing);
-        void send_vm_status_update(std::vector<std::string> vm_list, std::vector<std::uint8_t> vm_running_list);
+        void send_vm_status_update(std::vector<std::string> vm_list, std::vector<std::uint8_t> vm_running_list,
+                                   std::vector<std::vector<std::vector<std::string>>> vm_snaps_list);
 
     private:
         void reset();
@@ -83,6 +85,7 @@ private:
 
     std::vector<std::string> vm_list;
     std::vector<std::uint8_t> vm_running_list;
+    std::vector<std::vector<std::vector<std::string>>> vm_snaps_list;
 };
 
 #endif

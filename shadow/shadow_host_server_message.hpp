@@ -33,12 +33,18 @@ struct shadow_total_apps {
     std::uint32_t total_configurations = 0;
 };
 
+struct shadow_total_vm_snapshots {
+    std::uint32_t size = 0;
+    std::uint32_t* indiv_size;
+};
+
 struct shadow_config_message {
     std::uint32_t configuration_number = 0;
 };
 
 struct shadow_app_status {
-    std::uint32_t size = 0;  // size of following application
+    std::uint32_t size = 0;      // size of following application
+    std::uint32_t alt_size = 0;  // only used if send desc name
 
     enum struct app_status : std::uint8_t {
         NOT_RUNNING = 0,
@@ -47,6 +53,7 @@ struct shadow_app_status {
     } status;
 
     std::uint8_t* application_name;
+    std::uint8_t* desc_name;
 };
 
 using ApplicationStatusesEnum = std::vector<shadow_app_status::app_status>;

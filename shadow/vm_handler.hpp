@@ -23,13 +23,13 @@ public:
     using VMSavedCallback = std::function<void()>;
     using VMListCallback = std::function<void(std::vector<std::string>)>;
     using VMRunningListCallback = std::function<void(std::vector<std::uint8_t>)>;
-    using VMSnapsCallback = std::function<void(std::string, std::vector<std::vector<std::string>>)>;
+    using VMSnapsCallback = std::function<void(std::vector<std::vector<std::vector<std::string>>>)>;
 
     VMHandler(VMSavedCallback vm_saved_callback, VMListCallback vm_list_callback, VMRunningListCallback vm_running_list_callback,
               VMSnapsCallback vm_snaps_callback, boost::asio::io_service &io_service);
     ~VMHandler();
 
-    void get_vm_snaps(std::string vm);
+    std::vector<std::vector<std::string>> get_vm_snaps(std::string vm);
     void request_vm_status_update();
     void restore_vm(std::string vm, std::string restore_name);
     void save_vm(std::string vm, std::string name, std::string description);
@@ -39,6 +39,7 @@ public:
 private:
     std::vector<std::string> get_vm_list();
     std::vector<std::uint8_t> get_vm_running_list();
+    std::vector<std::vector<std::vector<std::string>>> get_vm_snaps_list(std::vector<std::string> vms);
     void start_vm_status_timer();
 
     void delete_snapshot(const nsCOMPtr<IVirtualBox> &pVirtualBox, const nsCOMPtr<ISession> &pSession, std::string vm_name,
@@ -65,7 +66,7 @@ private:
 
     std::vector<std::string> vm_list;
     std::vector<std::uint8_t> vm_running_list;
-    std::vector<std::vector<std::string>> vm_snaps;
+    std::vector<std::vector<std::vector<std::string>>> vm_snaps;
 
     VMSavedCallback vm_saved_callback;
     VMListCallback vm_list_callback;

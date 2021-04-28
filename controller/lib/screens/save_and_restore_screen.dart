@@ -6,6 +6,7 @@ import 'package:controller/shadow_client_c_api.dart';
 import 'package:provider/provider.dart';
 import 'package:controller/state_maintained.dart';
 import 'package:controller/screens/home_screen/application_bar.dart';
+import 'package:ffi/ffi.dart';
 
 class SaveAndRestoreScreen extends HookWidget {
   bool unSaveableState(BuildContext context) {
@@ -18,15 +19,21 @@ class SaveAndRestoreScreen extends HookWidget {
     final vmList = context.select((ShadowClientCAPI s) => s.vmList);
     final vmRunningList =
         context.select((ShadowClientCAPI s) => s.vmRunningList);
+    final snapList = context.select((ShadowClientCAPI s) => s.snapNamesList);
+    final snapDescList = context.select((ShadowClientCAPI s) => s.snapDescList);
 
     final chosenValueInitial =
+        Provider.of<StateMaintained>(context, listen: false);
+
+    final selectedRowInitial =
         Provider.of<StateMaintained>(context, listen: false);
 
     final client = Provider.of<ShadowClientCAPI>(context, listen: false);
 
     final chosenValue =
         useState<int?>(chosenValueInitial.saveAndRestoreLastConfig);
-    final selectedRow = useState<int?>(null);
+    final selectedRow =
+        useState<int?>(selectedRowInitial.saveAndRestoreLastSelected);
 
     final serverConnected =
         context.select((ShadowClientCAPI s) => s.serverConnected);
@@ -56,13 +63,25 @@ class SaveAndRestoreScreen extends HookWidget {
     }
 
     //sanity check
-    if ((chosenValue.value ?? 0) > vmList.length ||
+    if ((chosenValue.value ?? 0) >= vmList.length ||
         vmList.length != vmRunningList?.length) {
+      print("chosen value was greater than vmlist??");
       chosenValue.value = null;
+      selectedRow.value = null;
+    } else {
+      print("chosen value was good: ${chosenValue.value} , ${vmList.length}");
+      if (chosenValue.value != null) {
+        if (((selectedRow.value ?? 0) >=
+                snapList[chosenValue.value ?? 0].length) ||
+            vmList.length != snapList.length) {
+          selectedRow.value = null;
+        }
+      }
     }
 
     //saving values
     chosenValueInitial.saveAndRestoreLastConfig = chosenValue.value;
+    chosenValueInitial.saveAndRestoreLastSelected = selectedRow.value;
 
     return Scaffold(
       extendBody: true,
@@ -354,7 +373,12 @@ class SaveAndRestoreScreen extends HookWidget {
                                       ),
                                     ),
                                   ],
-                                  rows: List<DataRow>.generate(30, (index) {
+                                  rows: List<DataRow>.generate(
+                                      ((snapList.length != vmList.length) &&
+                                              (chosenValue.value != null))
+                                          ? 0
+                                          : snapList[chosenValue.value ?? 0]
+                                              .length, (index) {
                                     return DataRow(
                                       selected: index == selectedRow.value,
                                       onSelectChanged: (bool? value) {
@@ -362,9 +386,12 @@ class SaveAndRestoreScreen extends HookWidget {
                                             (value ?? false) ? index : -1;
                                       },
                                       cells: [
-                                        DataCell(Text("STS VM")),
                                         DataCell(Text(
-                                            "This VM is useful for a ton of purposes")),
+                                            snapList[chosenValue.value ?? 0]
+                                                [index])),
+                                        DataCell(Text(
+                                            snapDescList[chosenValue.value ?? 0]
+                                                [index])),
                                       ],
                                       color: MaterialStateProperty.resolveWith<
                                           Color>(
@@ -386,7 +413,22 @@ class SaveAndRestoreScreen extends HookWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         ElevatedButton(
-                            onPressed: () {}, child: Text("Restore")),
+                            onPressed: (selectedRow.value ?? -1) >= 0
+                                ? () {
+                                    print(
+                                        "test ==> ${selectedRow.value ?? -33}");
+                                    String vm = vmList[chosenValue.value ?? 0];
+                                    String snap =
+                                        snapList[chosenValue.value ?? 0]
+                                            [selectedRow.value ?? 0];
+                                    client.restoreSnap(
+                                        vm.toNativeUtf8(),
+                                        vm.length,
+                                        snap.toNativeUtf8(),
+                                        snap.length);
+                                  }
+                                : null,
+                            child: Text("Restore")),
                       ],
                     ),
                   ],

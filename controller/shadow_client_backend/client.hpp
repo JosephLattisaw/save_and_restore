@@ -12,7 +12,8 @@ public:
     using ControlStatusCallback = std::function<void(bool)>;
     using SimulationStatusCallback = std::function<void(bool)>;
     using SimicsStatusCallback = std::function<void(bool)>;
-    using VMListCallback = std::function<void(std::vector<std::string>, shadow::ApplicationStatuses)>;
+    using VMListCallback = std::function<void(std::vector<std::string>, shadow::ApplicationStatuses, std::vector<std::vector<std::string>>,
+                                              std::vector<std::vector<std::string>>)>;
     using VMRunningCallback = std::function<void(bool)>;
     Client(boost::asio::io_service &io_service, AppInitialStatusCallback app_initial_status_callback, ConnectionCallback connection_callback,
            ControlStatusCallback control_status_callback, SimulationStatusCallback simulation_status_callback,

@@ -113,17 +113,19 @@ void VMHandler::start_vm_status_timer() {
 void VMHandler::request_vm_status_update() {
     vm_list = get_vm_list();
     vm_running_list = get_vm_running_list();
+    vm_snaps = get_vm_snaps_list(vm_list);
 
     vm_list_callback(vm_list);
     vm_running_list_callback(vm_running_list);
+    vm_snaps_callback(vm_snaps);
 }
 
 std::vector<std::string> VMHandler::get_vm_list() { return list_vms(virtualBox); }
 
 std::vector<std::uint8_t> VMHandler::get_vm_running_list() { return list_running_vms(virtualBox); }
 
-void VMHandler::get_vm_snaps(std::string vm) {
-    vm_snaps.clear();
+std::vector<std::vector<std::string>> VMHandler::get_vm_snaps(std::string vm) {
+    std::vector<std::vector<std::string>> res;
 
     std::vector<std::tuple<int, std::string, std::string>> snapshot_list = list_snapshots(virtualBox, vm);
     for (auto i = 0; i < snapshot_list.size(); i++) {
@@ -132,12 +134,21 @@ void VMHandler::get_vm_snaps(std::string vm) {
         std::string snapshot_desc = std::get<2>(snapshot);
         std::vector<std::string> snap_vector;
         snap_vector.push_back(snapshot_name);
-        if (!snapshot_desc.empty()) snap_vector.push_back(snapshot_desc);
-        vm_snaps.push_back(snap_vector);
-        // TODO we should be sending the tree vs doing this
+        snap_vector.push_back(snapshot_desc);
+        res.push_back(snap_vector);
     }
 
-    vm_snaps_callback(vm, vm_snaps);
+    return res;
+}
+
+std::vector<std::vector<std::vector<std::string>>> VMHandler::get_vm_snaps_list(std::vector<std::string> vms) {
+    std::vector<std::vector<std::vector<std::string>>> result;
+
+    for (auto i : vms) {
+        result.push_back(get_vm_snaps(i));
+    }
+
+    return result;
 }
 
 void VMHandler::restore_vm(std::string vm, std::string restore_name) {

@@ -6,4 +6,5 @@ import 'dart:ffi' as ffi;
 
 class StateMaintained extends ChangeNotifier {
   int? saveAndRestoreLastConfig;
+  int? saveAndRestoreLastSelected;
 }

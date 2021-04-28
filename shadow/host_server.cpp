@@ -70,7 +70,7 @@ void HostServer::start_async_accept() {
             assert(it != socket_map.end());
 
             it->second->send_application_update(application_names, application_statuses);
-            it->second->send_vm_status_update(vm_list, vm_running_list);
+            it->second->send_vm_status_update(vm_list, vm_running_list, vm_snaps_list);
 
             client_number_count++;
         } else {
@@ -280,12 +280,13 @@ void HostServer::HostServerClient::send_status_update(std::uint64_t client_id, b
 
 void HostServer::send_vm_status_update() {
     for (auto const& [key, val] : socket_map) {
-        val->send_vm_status_update(vm_list, vm_running_list);
+        val->send_vm_status_update(vm_list, vm_running_list, vm_snaps_list);
     }
 }
 
-void HostServer::HostServerClient::send_vm_status_update(std::vector<std::string> vm_list, std::vector<std::uint8_t> vm_running_list) {
-    if (vm_list.size() == vm_running_list.size()) {
+void HostServer::HostServerClient::send_vm_status_update(std::vector<std::string> vm_list, std::vector<std::uint8_t> vm_running_list,
+                                                         std::vector<std::vector<std::vector<std::string>>> vm_snaps_list) {
+    if (vm_list.size() == vm_running_list.size() && vm_snaps_list.size() == vm_list.size()) {
         if (socket && socket->is_open()) {
             // creating main header
             shadow::shadow_host_message shm;
@@ -309,6 +310,53 @@ void HostServer::HostServerClient::send_vm_status_update(std::vector<std::string
                 shm.size += as_sizes.back();
             }
 
+            // snap sizes
+            shadow::shadow_total_vm_snapshots stvms;
+            shm.size += sizeof(shadow::shadow_total_vm_snapshots);
+            std::vector<std::uint32_t> snap_sizes;
+
+            for (auto i = 0; i < vm_snaps_list.size(); i++) {
+                snap_sizes.push_back(vm_snaps_list[i].size());
+            }
+            stvms.size = snap_sizes.size();
+            shm.size += snap_sizes.size() * sizeof(std::uint32_t);
+
+            // snap names
+            std::vector<std::vector<size_t>> as_sizes_3;
+            std::vector<std::vector<std::vector<std::uint8_t>>> names_3;
+
+            std::vector<std::vector<size_t>> as_sizes_5;
+            std::vector<std::vector<std::vector<std::uint8_t>>> names_5;
+
+            for (auto i = 0; i < snap_sizes.size(); i++) {
+                std::vector<size_t> as_sizes_2;
+                std::vector<std::vector<std::uint8_t>> names_2;
+
+                std::vector<size_t> as_sizes_4;
+                std::vector<std::vector<std::uint8_t>> names_4;
+                for (auto k = 0; k < snap_sizes[i]; k++) {
+                    std::vector<std::uint8_t> app_name(vm_snaps_list[i][k][0].begin(), vm_snaps_list[i][k][0].end());
+                    as_sizes_2.push_back(app_name.size() * sizeof(decltype(app_name)::value_type));
+
+                    std::vector<std::uint8_t> desc_name(vm_snaps_list[i][k][1].begin(), vm_snaps_list[i][k][1].end());
+                    as_sizes_4.push_back(desc_name.size() * sizeof(decltype(desc_name)::value_type));
+
+                    names_2.push_back(app_name);
+                    names_4.push_back(desc_name);
+                    shm.size += sizeof(shadow::shadow_app_status);
+                    shm.size += as_sizes_2.back();
+                    shm.size += as_sizes_4.back();
+                }
+
+                as_sizes_3.push_back(as_sizes_2);
+                names_3.push_back(names_2);
+                as_sizes_5.push_back(as_sizes_4);
+                names_5.push_back(names_4);
+            }
+
+            std::cout << "total expected size: " << shm.size << std::endl;
+            auto size_written = 0;
+
             // writing header
             boost::asio::async_write(
                 *socket, boost::asio::buffer(reinterpret_cast<char*>(&shm), sizeof(shm)),
@@ -319,6 +367,9 @@ void HostServer::HostServerClient::send_vm_status_update(std::vector<std::string
                 *socket, boost::asio::buffer(reinterpret_cast<char*>(&sta), sizeof(sta)),
                 std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
 
+            size_written += sizeof(sta);
+            std::cout << "size written: " << size_written << std::endl;
+
             for (auto i = 0; i < vm_list.size(); i++) {
                 shadow::shadow_app_status sat;
                 sat.status = static_cast<shadow::shadow_app_status::app_status>(vm_running_list[i]);
@@ -328,10 +379,62 @@ void HostServer::HostServerClient::send_vm_status_update(std::vector<std::string
                     *socket, boost::asio::buffer(reinterpret_cast<char*>(&sat), sizeof(sat)),
                     std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
 
+                size_written += sizeof(sat);
+                std::cout << "size written: " << size_written << std::endl;
+
                 boost::asio::async_write(
                     *socket, boost::asio::buffer(reinterpret_cast<char*>(names[i].data()), as_sizes[i]),
                     std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+                size_written += as_sizes[i];
+                std::cout << "size written: " << size_written << std::endl;
             }
+
+            // writing total snaps
+            boost::asio::async_write(
+                *socket, boost::asio::buffer(reinterpret_cast<char*>(&stvms), sizeof(stvms)),
+                std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+            size_written += sizeof(stvms);
+            std::cout << "size written: " << size_written << std::endl;
+
+            // writing total snaps sizes
+            boost::asio::async_write(
+                *socket, boost::asio::buffer(reinterpret_cast<char*>(snap_sizes.data()), stvms.size * sizeof(std::uint32_t)),
+                std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+            size_written += stvms.size * sizeof(std::uint32_t);
+            std::cout << "size written1: " << size_written << std::endl;
+
+            for (auto i = 0; i < snap_sizes.size(); i++) {
+                for (auto k = 0; k < snap_sizes[i]; k++) {
+                    shadow::shadow_app_status sat;
+                    sat.size = as_sizes_3[i][k];
+                    sat.alt_size = as_sizes_5[i][k];
+
+                    boost::asio::async_write(
+                        *socket, boost::asio::buffer(reinterpret_cast<char*>(&sat), sizeof(sat)),
+                        std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+                    size_written += sizeof(sat);
+                    std::cout << "size written: " << size_written << std::endl;
+
+                    boost::asio::async_write(
+                        *socket, boost::asio::buffer(reinterpret_cast<char*>(names_3[i][k].data()), as_sizes_3[i][k]),
+                        std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+                    size_written += as_sizes_3[i][k];
+                    std::cout << "size written: " << size_written << std::endl;
+
+                    boost::asio::async_write(
+                        *socket, boost::asio::buffer(reinterpret_cast<char*>(names_5[i][k].data()), as_sizes_5[i][k]),
+                        std::bind(&HostServer::HostServerClient::write_error_handler, this, std::placeholders::_1, std::placeholders::_2));
+
+                    size_written += as_sizes_5[i][k];
+                    std::cout << "size written: " << size_written << std::endl;
+                }
+            }
+
         } else {
             std::cerr << "host server client: " << client_number
                       << ", socket wasn't open while attempting to "

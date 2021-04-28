@@ -59,8 +59,8 @@ void Client::start_read() {
                 if (header_buffer.size() == sizeof(shadow::shadow_host_message)) {
                     const shadow::shadow_host_message *shm = boost::asio::buffer_cast<const shadow::shadow_host_message *>(header_buffer.data());
 
-                    // std::cout << "client: finished reading header" << std::endl;
-                    // std::cout << "client: attempting to read " << shm->size << " bytes" << std::endl;
+                    std::cout << "client: finished reading header" << std::endl;
+                    std::cout << "client: attempting to read " << shm->size << " bytes" << std::endl;
 
                     auto msg = shm->message;
                     auto msg_size = shm->size;
@@ -70,7 +70,9 @@ void Client::start_read() {
                         [&, msg, msg_size](const boost::system::error_code &error, std::size_t bytes_transferred) {
                             if (!error) {
                                 if (data_buffer.size() == msg_size) {
-                                    // std::cout << "client received the correct amount of data" << std::endl;
+                                    std::cout << "client received the correct amount of data" << std::endl;
+                                    std::cout << "client msg: " << static_cast<int>(msg) << std::endl;
+                                    std::cout << "client msg size: " << msg_size << std::endl;
 
                                     switch (msg) {
                                         case shadow::shadow_host_message::host_message::APP_INITIAL_STATUS: {
@@ -114,37 +116,89 @@ void Client::start_read() {
                                             }
                                         } break;
                                         case shadow::shadow_host_message::host_message::VM_LIST: {
-                                            // std::cout << "client: received vm list message" << std::endl;
+                                            std::cout << "client: received vm list message" << std::endl;
                                             const std::uint8_t *data = boost::asio::buffer_cast<const std::uint8_t *>(data_buffer.data());
 
                                             const shadow::shadow_total_apps *sta = reinterpret_cast<const shadow::shadow_total_apps *>(&data[0]);
 
-                                            // std::cout << "client: total virtual machines: " << sta->total_applications << std::endl;
+                                            std::cout << "client: total virtual machines: " << sta->total_applications << std::endl;
 
                                             auto it = sizeof(shadow::shadow_total_apps);
+                                            std::cout << "size read: " << it << std::endl;
+
                                             std::vector<std::string> vms;
                                             shadow::ApplicationStatuses app_statuses;
                                             for (auto i = 0; i < sta->total_applications; i++) {
                                                 const shadow::shadow_app_status *sat = reinterpret_cast<const shadow::shadow_app_status *>(&data[it]);
 
-                                                // std::cout << "client: virtual machine name size: " << sat->size << std::endl;
-                                                // std::cout << "client: virtual machine status: " << static_cast<int>(sat->status) << std::endl;
+                                                std::cout << "client: virtual machine name size: " << sat->size << std::endl;
+                                                std::cout << "client: virtual machine status: " << static_cast<int>(sat->status) << std::endl;
 
                                                 app_statuses.push_back(static_cast<shadow::app_status_t>(sat->status));
 
                                                 it += sizeof(shadow::shadow_app_status);
+                                                std::cout << "size read: " << it << std::endl;
 
                                                 std::string name(&data[it], &data[it] + sat->size);
                                                 vms.push_back(name);
-                                                // std::cout << "client: vm name: " << name << std::endl;
+                                                std::cout << "client: vm name: " << name << std::endl;
                                                 it += sat->size;
+                                                std::cout << "size read: " << it << std::endl;
                                             }
 
-                                            if (vms.size() == app_statuses.size()) {
+                                            std::cout << "it1: " << it << " ms: " << msg_size << std::endl;
+
+                                            // reading total vm snapshots:
+                                            const shadow::shadow_total_vm_snapshots *stvms =
+                                                reinterpret_cast<const shadow::shadow_total_vm_snapshots *>(&data[it]);
+                                            std::cout << "total vms: with snapshots: " << stvms->size << std::endl;
+                                            it += sizeof(shadow::shadow_total_vm_snapshots);
+                                            std::cout << "it1: " << it << " ms: " << msg_size << std::endl;
+                                            std::cout << "size read: " << it << std::endl;
+
+                                            // getting each machines total vm snapshots
+                                            const std::uint32_t *st_data_sz = reinterpret_cast<const std::uint32_t *>(&data[it]);
+
+                                            it += sizeof(std::uint32_t) * stvms->size;
+                                            std::cout << "size read: " << it << std::endl;
+
+                                            std::vector<std::vector<std::string>> snap_names;
+                                            std::vector<std::vector<std::string>> snap_desc;
+
+                                            for (auto i = 0; i < stvms->size; i++) {
+                                                std::cout << "vm snap size: " << st_data_sz[i] << std::endl;
+                                                std::vector<std::string> sn_names;
+                                                std::vector<std::string> sn_descs;
+
+                                                for (auto k = 0; k < st_data_sz[i]; k++) {
+                                                    std::cout << "k: " << k << std::endl;
+                                                    const shadow::shadow_app_status *sas =
+                                                        reinterpret_cast<const shadow::shadow_app_status *>(&data[it]);
+                                                    it += sizeof(shadow::shadow_app_status);
+                                                    std::cout << "size read: " << it << std::endl;
+
+                                                    std::string name(&data[it], &data[it] + sas->size);
+                                                    std::cout << "client: snapshot name: " << name << std::endl;
+                                                    it += sas->size;
+
+                                                    std::string desc(&data[it], &data[it] + sas->alt_size);
+                                                    std::cout << "client: snapshot desc: " << name << std::endl;
+                                                    it += sas->alt_size;
+
+                                                    std::cout << "size read: " << it << std::endl;
+                                                    sn_names.push_back(name);
+                                                    sn_descs.push_back(desc);
+                                                }
+                                                snap_names.push_back(sn_names);
+                                                snap_desc.push_back(sn_descs);
+                                            }
+
+                                            if (vms.size() == app_statuses.size() && vms.size() == snap_names.size() &&
+                                                snap_names.size() == snap_desc.size()) {
                                                 // std::cout << "client: received valid vm data update" << std::endl;
                                                 vm_list = vms;
                                                 vm_running_list = app_statuses;
-                                                vm_list_callback(vm_list, vm_running_list);
+                                                vm_list_callback(vm_list, vm_running_list, snap_names, snap_desc);
                                             } else {
                                                 std::cerr << "client: app size doesn't equal app statuses size?" << std::endl;
                                                 reset();
